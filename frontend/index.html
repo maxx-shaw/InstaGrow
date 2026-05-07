@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InstaGrow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fdf4ff', 100: '#fae8ff', 200: '#f5d0fe',
+              300: '#f0abfc', 400: '#e879f9', 500: '#d946ef',
+              600: '#c026d3', 700: '#a21caf', 800: '#86198f', 900: '#701a75',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #0f0f17; color: #e2e8f0; font-family: 'Inter', system-ui, sans-serif; }
+    .sidebar-link { @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer text-sm font-medium; }
+    .sidebar-link.active { @apply text-white bg-gradient-to-r from-purple-600/30 to-pink-600/20 border border-purple-500/30; }
+    .card { @apply bg-slate-900/60 border border-slate-700/50 rounded-xl p-5 backdrop-blur-sm; }
+    .btn-primary { @apply px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed; }
+    .btn-secondary { @apply px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium text-sm transition-all; }
+    .btn-danger { @apply px-4 py-2 bg-red-600/80 hover:bg-red-600 text-white rounded-lg font-medium text-sm transition-all; }
+    .input { @apply w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors; }
+    .badge-green { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30; }
+    .badge-red { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30; }
+    .badge-yellow { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30; }
+    .badge-gray { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-600/50 text-slate-400 border border-slate-600; }
+    .badge-purple { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30; }
+    .stat-card { @apply card flex flex-col gap-1; }
+    .toggle { @apply relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer; }
+    .toggle.on { @apply bg-gradient-to-r from-purple-600 to-pink-600; }
+    .toggle.off { @apply bg-slate-700; }
+    .toggle-knob { @apply inline-block h-4 w-4 transform rounded-full bg-white transition-transform; }
+    .toggle.on .toggle-knob { transform: translateX(1.25rem); }
+    .toggle.off .toggle-knob { transform: translateX(0.25rem); }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    .toast { @apply fixed top-4 right-4 px-4 py-3 rounded-lg text-sm font-medium shadow-lg z-50 transition-all; }
+    .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .table-row { @apply border-b border-slate-800 hover:bg-slate-800/40 transition-colors; }
+    #login-screen { display: none; }
+    #app-screen { display: none; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<!-- ==================== LOGIN SCREEN ==================== -->
+<div id="login-screen" class="min-h-screen flex items-center justify-center">
+  <div class="w-full max-w-md px-4">
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center gap-2 mb-3">
+        <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none">
+          <defs><linearGradient id="ig" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#833ab4"/><stop offset="50%" stop-color="#fd1d1d"/><stop offset="100%" stop-color="#fcb045"/></linearGradient></defs>
+          <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#ig)"/>
+          <circle cx="12" cy="12" r="4" stroke="white" stroke-width="1.5" fill="none"/>
+          <circle cx="17.5" cy="6.5" r="1" fill="white"/>
+        </svg>
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">InstaGrow</h1>
+      </div>
+      <p class="text-slate-400 text-sm">Instagram Growth Manager</p>
+    </div>
+
+    <div class="card">
+      <div id="login-form-section">
+        <h2 class="text-lg font-semibold mb-4">Connect Your Account</h2>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Instagram Username</label>
+            <input id="login-username" type="text" placeholder="your_username" class="input" />
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Password</label>
+            <input id="login-password" type="password" placeholder="••••••••" class="input" />
+          </div>
+          <button id="login-btn" onclick="doLogin()" class="btn-primary w-full mt-2 flex items-center justify-center gap-2">
+            <span>Connect Account</span>
+          </button>
+        </div>
+        <p class="text-xs text-slate-500 mt-3 text-center">Your credentials are only used to connect to Instagram's API and are stored locally.</p>
+      </div>
+
+      <div id="challenge-section" style="display:none">
+        <h2 class="text-lg font-semibold mb-1">Verification Required</h2>
+        <p id="challenge-desc" class="text-sm text-slate-400 mb-4">Instagram sent a verification code.</p>
+        <div class="space-y-3">
+          <input id="challenge-code" type="text" placeholder="Enter 6-digit code" class="input text-center text-xl tracking-widest" maxlength="8" />
+          <button onclick="submitChallenge()" class="btn-primary w-full">Verify</button>
+        </div>
+      </div>
+
+      <div id="login-status-msg" class="text-sm text-center mt-3" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MAIN APP ==================== -->
+<div id="app-screen" class="flex h-screen overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside class="w-56 flex-shrink-0 flex flex-col bg-slate-900/40 border-r border-slate-800 p-3 overflow-y-auto">
+    <div class="flex items-center gap-2 px-2 py-3 mb-4">
+      <svg class="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+        <defs><linearGradient id="ig2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#833ab4"/><stop offset="50%" stop-color="#fd1d1d"/><stop offset="100%" stop-color="#fcb045"/></linearGradient></defs>
+        <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#ig2)"/>
+        <circle cx="12" cy="12" r="4" stroke="white" stroke-width="1.5" fill="none"/>
+        <circle cx="17.5" cy="6.5" r="1" fill="white"/>
+      </svg>
+      <span class="font-bold text-white">InstaGrow</span>
+    </div>
+
+    <!-- Account info -->
+    <div id="sidebar-account" class="px-2 mb-4 pb-4 border-b border-slate-800">
+      <p class="text-xs text-slate-500 mb-1">Connected as</p>
+      <p id="sidebar-username" class="text-sm font-semibold text-white truncate">—</p>
+    </div>
+
+    <nav class="flex flex-col gap-1 flex-1">
+      <div class="sidebar-link active" onclick="showView('dashboard')" id="nav-dashboard">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </div>
+      <div class="sidebar-link" onclick="showView('following')" id="nav-following">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Following
+      </div>
+      <div class="sidebar-link" onclick="showView('auto-unfollow')" id="nav-auto-unfollow">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"/></svg>
+        Auto-Unfollow
+      </div>
+      <div class="sidebar-link" onclick="showView('auto-follow')" id="nav-auto-follow">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        Auto-Follow
+      </div>
+      <div class="sidebar-link" onclick="showView('queue')" id="nav-queue">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        Follow Queue
+      </div>
+      <div class="sidebar-link" onclick="showView('blacklist')" id="nav-blacklist">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+        Blacklist
+      </div>
+      <div class="sidebar-link" onclick="showView('activity')" id="nav-activity">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Activity Log
+      </div>
+    </nav>
+
+    <button onclick="doLogout()" class="mt-auto sidebar-link text-red-400 hover:text-red-300 hover:bg-red-500/10">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      Logout
+    </button>
+  </aside>
+
+  <!-- Main content -->
+  <main class="flex-1 overflow-y-auto p-6">
+
+    <!-- Dashboard View -->
+    <div id="view-dashboard" class="view">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-xl font-bold">Dashboard</h1>
+        <button onclick="syncFollowing()" id="sync-btn" class="btn-secondary flex items-center gap-2 text-xs">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Sync from Instagram
+        </button>
+      </div>
+
+      <!-- Stats grid -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card">
+          <p class="text-xs text-slate-500 uppercase tracking-wide">Following</p>
+          <p id="stat-following" class="text-2xl font-bold text-white">—</p>
+        </div>
+        <div class="stat-card">
+          <p class="text-xs text-slate-500 uppercase tracking-wide">Not Following Back</p>
+          <p id="stat-nfb" class="text-2xl font-bold text-red-400">—</p>
+        </div>
+        <div class="stat-card">
+          <p class="text-xs text-slate-500 uppercase tracking-wide">Following Back</p>
+          <p id="stat-fb" class="text-2xl font-bold text-green-400">—</p>
+        </div>
+        <div class="stat-card">
+          <p class="text-xs text-slate-500 uppercase tracking-wide">Unfollowed (7d)</p>
+          <p id="stat-unf" class="text-2xl font-bold text-yellow-400">—</p>
+        </div>
+      </div>
+
+      <!-- Today's activity + automation status -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div class="card">
+          <h3 class="text-sm font-semibold text-slate-300 mb-3">Today's Activity</h3>
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-slate-400">Follows</span>
+              <span id="today-follows" class="text-sm font-semibold text-white">—</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-1.5">
+              <div id="follows-bar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-1.5 rounded-full transition-all" style="width:0%"></div>
+            </div>
+            <div class="flex justify-between items-center mt-3">
+              <span class="text-sm text-slate-400">Unfollows</span>
+              <span id="today-unfollows" class="text-sm font-semibold text-white">—</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-1.5">
+              <div id="unfollows-bar" class="bg-gradient-to-r from-red-500 to-orange-500 h-1.5 rounded-full transition-all" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="text-sm font-semibold text-slate-300 mb-3">Automation Status</h3>
+          <div class="space-y-2.5">
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-slate-400">Auto-Follow</span>
+              <span id="status-auto-follow" class="badge-gray">Off</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-slate-400">Auto-Unfollow</span>
+              <span id="status-auto-unfollow" class="badge-gray">Off</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-slate-400">Follow Queue</span>
+              <span id="status-queue" class="badge-purple">— queued</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-slate-400">Blacklist</span>
+              <span id="status-blacklist" class="badge-gray">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent activity -->
+      <div class="card">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-slate-300">Recent Activity</h3>
+          <button onclick="showView('activity')" class="text-xs text-purple-400 hover:text-purple-300">View all →</button>
+        </div>
+        <div id="recent-activity" class="space-y-1.5">
+          <p class="text-sm text-slate-500">Loading...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Following View -->
+    <div id="view-following" class="view" style="display:none">
+      <div class="flex flex-wrap items-center gap-3 mb-5">
+        <h1 class="text-xl font-bold">Following</h1>
+        <div class="flex gap-2 ml-auto flex-wrap">
+          <select id="follow-filter" onchange="loadFollowing(1)" class="input w-auto text-xs">
+            <option value="all">All Following</option>
+            <option value="not_following_back">Not Following Back</option>
+            <option value="following_back">Following Back</option>
+            <option value="unfollowed">Unfollowed</option>
+          </select>
+          <button onclick="loadFollowing(1)" class="btn-secondary text-xs">Refresh</button>
+          <button onclick="unfollowSelected()" id="unfollow-selected-btn" class="btn-danger text-xs hidden">Unfollow Selected (<span id="selected-count">0</span>)</button>
+        </div>
+      </div>
+
+      <div class="card p-0 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-800 bg-slate-900/40">
+              <th class="px-4 py-3 text-left"><input type="checkbox" id="select-all-follows" onchange="toggleSelectAll(this)" class="rounded border-slate-600 bg-slate-800" /></th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">User</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">Status</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">Followed</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">Source</th>
+              <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wide">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="following-table-body">
+            <tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">Loading...</td></tr>
+          </tbody>
+        </table>
+        <div id="following-pagination" class="flex items-center justify-between px-4 py-3 border-t border-slate-800">
+          <span id="following-total" class="text-xs text-slate-500"></span>
+          <div class="flex gap-2">
+            <button id="follow-prev-btn" onclick="loadFollowing(currentFollowPage-1)" class="btn-secondary text-xs disabled:opacity-40">← Prev</button>
+            <button id="follow-next-btn" onclick="loadFollowing(currentFollowPage+1)" class="btn-secondary text-xs disabled:opacity-40">Next →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auto-Unfollow View -->
+    <div id="view-auto-unfollow" class="view" style="display:none">
+      <h1 class="text-xl font-bold mb-5">Auto-Unfollow Settings</h1>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="card space-y-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-semibold">Auto-Unfollow</h3>
+              <p class="text-xs text-slate-500 mt-0.5">Automatically unfollow people who don't follow back</p>
+            </div>
+            <div onclick="toggleSetting('auto_unfollow_enabled')" id="toggle-auto_unfollow_enabled" class="toggle off">
+              <span class="toggle-knob"></span>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm text-slate-300 mb-1">Unfollow after <span id="val-unfollow_after_days" class="text-purple-400 font-semibold"></span> days</label>
+              <input type="range" id="range-unfollow_after_days" min="1" max="60" oninput="updateRangeVal('unfollow_after_days')" onchange="saveSetting('unfollow_after_days', this.value)" class="w-full accent-purple-500" />
+              <div class="flex justify-between text-xs text-slate-600 mt-1"><span>1 day</span><span>60 days</span></div>
+            </div>
+
+            <div>
+              <label class="block text-sm text-slate-300 mb-1">Max unfollows per day: <span id="val-unfollow_per_day" class="text-purple-400 font-semibold"></span></label>
+              <input type="range" id="range-unfollow_per_day" min="5" max="200" oninput="updateRangeVal('unfollow_per_day')" onchange="saveSetting('unfollow_per_day', this.value)" class="w-full accent-purple-500" />
+              <div class="flex justify-between text-xs text-slate-600 mt-1"><span>5</span><span>200</span></div>
+            </div>
+
+            <div class="flex items-center justify-between py-2">
+              <div>
+                <p class="text-sm text-slate-300">Only unfollow non-followers</p>
+                <p class="text-xs text-slate-500">Skip people who do follow you back</p>
+              </div>
+              <div onclick="toggleSetting('unfollow_only_non_followers')" id="toggle-unfollow_only_non_followers" class="toggle off flex-shrink-0">
+                <span class="toggle-knob"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card space-y-4">
+          <h3 class="font-semibold">Active Hours</h3>
+          <p class="text-xs text-slate-500">Automation only runs within these hours (UTC)</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Start hour (UTC)</label>
+              <input type="number" id="input-active_hours_start" min="0" max="23" onchange="saveSetting('active_hours_start', parseInt(this.value))" class="input" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">End hour (UTC)</label>
+              <input type="number" id="input-active_hours_end" min="0" max="23" onchange="saveSetting('active_hours_end', parseInt(this.value))" class="input" />
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-800">
+            <button onclick="triggerUnfollow()" class="btn-danger w-full">Run Unfollow Job Now</button>
+            <p class="text-xs text-slate-500 mt-2 text-center">Immediately processes the unfollow queue up to today's limit</p>
+          </div>
+
+          <div id="unfollow-stats" class="text-sm space-y-1">
+            <p class="text-slate-400">Unfollows today: <span id="uf-today" class="text-white font-semibold">—</span> / <span id="uf-limit" class="text-slate-400">—</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auto-Follow View -->
+    <div id="view-auto-follow" class="view" style="display:none">
+      <h1 class="text-xl font-bold mb-5">Auto-Follow Settings</h1>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="card space-y-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-semibold">Auto-Follow</h3>
+              <p class="text-xs text-slate-500 mt-0.5">Gradually follow queued accounts throughout the day</p>
+            </div>
+            <div onclick="toggleSetting('auto_follow_enabled')" id="toggle-auto_follow_enabled" class="toggle off">
+              <span class="toggle-knob"></span>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm text-slate-300 mb-1">Max follows per day: <span id="val-follow_per_day" class="text-purple-400 font-semibold"></span></label>
+              <input type="range" id="range-follow_per_day" min="5" max="150" oninput="updateRangeVal('follow_per_day')" onchange="saveSetting('follow_per_day', this.value)" class="w-full accent-purple-500" />
+              <div class="flex justify-between text-xs text-slate-600 mt-1"><span>5</span><span>150 (safe max)</span></div>
+            </div>
+
+            <div>
+              <label class="block text-sm text-slate-300 mb-1">Delay between follows: <span id="val-follow_delay_min" class="text-purple-400 font-semibold"></span>s – <span id="val-follow_delay_max" class="text-purple-400 font-semibold"></span>s</label>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-xs text-slate-500">Min (seconds)</label>
+                  <input type="number" id="input-follow_delay_min" min="20" max="300" onchange="saveSetting('follow_delay_min', parseInt(this.value))" class="input mt-1" />
+                </div>
+                <div>
+                  <label class="text-xs text-slate-500">Max (seconds)</label>
+                  <input type="number" id="input-follow_delay_max" min="20" max="600" onchange="saveSetting('follow_delay_max', parseInt(this.value))" class="input mt-1" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm text-slate-300 mb-1">Min mutual follows: <span id="val-mutual_follows_threshold" class="text-purple-400 font-semibold"></span></label>
+              <input type="range" id="range-mutual_follows_threshold" min="1" max="20" oninput="updateRangeVal('mutual_follows_threshold')" onchange="saveSetting('mutual_follows_threshold', this.value)" class="w-full accent-purple-500" />
+              <div class="flex justify-between text-xs text-slate-600 mt-1"><span>1 mutual</span><span>20 mutuals</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card space-y-4">
+          <h3 class="font-semibold">Scan Settings</h3>
+          <p class="text-xs text-slate-500">Controls how we discover new accounts to follow (followers-of-following)</p>
+
+          <div>
+            <label class="block text-sm text-slate-300 mb-1">Scan depth: <span id="val-scan_depth" class="text-purple-400 font-semibold"></span> accounts</label>
+            <input type="range" id="range-scan_depth" min="1" max="20" oninput="updateRangeVal('scan_depth')" onchange="saveSetting('scan_depth', this.value)" class="w-full accent-purple-500" />
+            <p class="text-xs text-slate-500 mt-1">Number of your followings to probe for their followers</p>
+          </div>
+
+          <div class="pt-3 border-t border-slate-800 space-y-2">
+            <button onclick="triggerScan()" class="btn-primary w-full">Scan for New Accounts</button>
+            <p class="text-xs text-slate-500 text-center">Finds followers-of-following with enough mutuals and adds them to the queue</p>
+          </div>
+
+          <div id="follow-stats" class="text-sm space-y-1">
+            <p class="text-slate-400">Follows today: <span id="f-today" class="text-white font-semibold">—</span> / <span id="f-limit" class="text-slate-400">—</span></p>
+            <p class="text-slate-400">Queue size: <span id="f-queue" class="text-white font-semibold">—</span></p>
+            <p class="text-slate-400">Last scan: <span id="f-last-scan" class="text-white font-semibold">—</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Follow Queue View -->
+    <div id="view-queue" class="view" style="display:none">
+      <div class="flex items-center gap-3 mb-5">
+        <h1 class="text-xl font-bold">Follow Queue</h1>
+        <span id="queue-count-badge" class="badge-purple">0 queued</span>
+        <div class="ml-auto flex gap-2">
+          <button onclick="triggerScan()" class="btn-primary text-xs">Scan for More</button>
+          <button onclick="clearQueue()" class="btn-danger text-xs">Clear Queue</button>
+        </div>
+      </div>
+
+      <div class="card p-0 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-800 bg-slate-900/40">
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">User</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">Mutuals</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">Source</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">Added</th>
+              <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wide">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="queue-table-body">
+            <tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">Queue is empty. Run a scan to find accounts.</td></tr>
+          </tbody>
+        </table>
+        <div id="queue-pagination" class="flex items-center justify-between px-4 py-3 border-t border-slate-800">
+          <span id="queue-total" class="text-xs text-slate-500"></span>
+          <div class="flex gap-2">
+            <button id="queue-prev-btn" onclick="loadQueue(currentQueuePage-1)" class="btn-secondary text-xs">← Prev</button>
+            <button id="queue-next-btn" onclick="loadQueue(currentQueuePage+1)" class="btn-secondary text-xs">Next →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blacklist View -->
+    <div id="view-blacklist" class="view" style="display:none">
+      <div class="flex items-center gap-3 mb-5">
+        <h1 class="text-xl font-bold">Blacklist</h1>
+        <span id="blacklist-count-badge" class="badge-red">0 blocked</span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="card lg:col-span-2 p-0 overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-800 bg-slate-900/40">
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">Username</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">Reason</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">Added</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wide">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="blacklist-table-body">
+              <tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">No entries. Add accounts you never want to follow.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h3 class="font-semibold mb-4">Add to Blacklist</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Instagram Username</label>
+              <input id="bl-username" type="text" placeholder="username_here" class="input" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Reason (optional)</label>
+              <input id="bl-reason" type="text" placeholder="e.g. competitor, spam" class="input" />
+            </div>
+            <button onclick="addToBlacklist()" class="btn-primary w-full">Add to Blacklist</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Log View -->
+    <div id="view-activity" class="view" style="display:none">
+      <div class="flex items-center gap-3 mb-5">
+        <h1 class="text-xl font-bold">Activity Log</h1>
+        <select id="activity-filter" onchange="loadActivity(1)" class="input w-auto text-xs ml-auto">
+          <option value="all">All Actions</option>
+          <option value="follow">Follows</option>
+          <option value="unfollow">Unfollows</option>
+          <option value="sync">Syncs</option>
+          <option value="scan">Scans</option>
+          <option value="error">Errors</option>
+        </select>
+      </div>
+
+      <div class="card p-0 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-800 bg-slate-900/40">
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">Time</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">Action</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">Target</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">Details</th>
+              <th class="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wide">Status</th>
+            </tr>
+          </thead>
+          <tbody id="activity-table-body">
+            <tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">Loading...</td></tr>
+          </tbody>
+        </table>
+        <div id="activity-pagination" class="flex items-center justify-between px-4 py-3 border-t border-slate-800">
+          <span id="activity-total" class="text-xs text-slate-500"></span>
+          <div class="flex gap-2">
+            <button id="activity-prev-btn" onclick="loadActivity(currentActivityPage-1)" class="btn-secondary text-xs">← Prev</button>
+            <button id="activity-next-btn" onclick="loadActivity(currentActivityPage+1)" class="btn-secondary text-xs">Next →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script>
+const API = '';  // same origin
+let currentView = 'dashboard';
+let currentFollowPage = 1;
+let currentQueuePage = 1;
+let currentActivityPage = 1;
+let automationSettings = {};
+let selectedFollowIds = new Set();
+
+// ==================== INIT ====================
+async function init() {
+  const status = await api('GET', '/api/auth/status');
+  if (status.status === 'logged_in') {
+    showApp(status.username);
+  } else {
+    showLogin();
+  }
+}
+
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+}
+
+function showApp(username) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'flex';
+  document.getElementById('sidebar-username').textContent = '@' + (username || '');
+  loadDashboard();
+}
+
+// ==================== AUTH ====================
+async function doLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!username || !password) { showMsg('Please enter username and password', 'error'); return; }
+
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spinner"></span><span>Connecting...</span>';
+  showStatusMsg('Connecting to Instagram...', 'info');
+
+  await api('POST', '/api/auth/login', { username, password });
+  pollLoginStatus();
+}
+
+function pollLoginStatus() {
+  const interval = setInterval(async () => {
+    const status = await api('GET', '/api/auth/status');
+
+    if (status.status === 'logged_in') {
+      clearInterval(interval);
+      showApp(status.username);
+    } else if (status.status === 'challenge_required') {
+      clearInterval(interval);
+      showChallengeForm(status.challenge_method);
+    } else if (status.status === 'totp_required') {
+      clearInterval(interval);
+      showChallengeForm('totp');
+    } else if (status.status === 'error') {
+      clearInterval(interval);
+      resetLoginBtn();
+      showStatusMsg(status.error || 'Login failed', 'error');
+    } else {
+      showStatusMsg('Connecting...', 'info');
+    }
+  }, 1500);
+}
+
+function showChallengeForm(method) {
+  document.getElementById('login-form-section').style.display = 'none';
+  document.getElementById('challenge-section').style.display = 'block';
+  const desc = {
+    email: 'Instagram sent a verification code to your email.',
+    sms: 'Instagram sent a verification code via SMS.',
+    totp: 'Enter your two-factor authentication code.',
+  };
+  document.getElementById('challenge-desc').textContent = desc[method] || 'Enter the verification code from Instagram.';
+  hideStatusMsg();
+}
+
+async function submitChallenge() {
+  const code = document.getElementById('challenge-code').value.trim();
+  if (!code) return;
+  await api('POST', '/api/auth/challenge', { code });
+  showStatusMsg('Verifying...', 'info');
+  pollLoginStatus();
+}
+
+function resetLoginBtn() {
+  const btn = document.getElementById('login-btn');
+  btn.disabled = false;
+  btn.innerHTML = '<span>Connect Account</span>';
+}
+
+async function doLogout() {
+  await api('POST', '/api/auth/logout');
+  document.getElementById('challenge-section').style.display = 'none';
+  document.getElementById('login-form-section').style.display = 'block';
+  resetLoginBtn();
+  hideStatusMsg();
+  showLogin();
+}
+
+function showStatusMsg(msg, type) {
+  const el = document.getElementById('login-status-msg');
+  el.style.display = 'block';
+  el.className = `text-sm text-center mt-3 ${type === 'error' ? 'text-red-400' : 'text-slate-400'}`;
+  el.textContent = msg;
+}
+
+function hideStatusMsg() {
+  document.getElementById('login-status-msg').style.display = 'none';
+}
+
+// ==================== NAVIGATION ====================
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('view-' + name).style.display = 'block';
+  const navEl = document.getElementById('nav-' + name);
+  if (navEl) navEl.classList.add('active');
+  currentView = name;
+
+  if (name === 'dashboard') loadDashboard();
+  else if (name === 'following') loadFollowing(1);
+  else if (name === 'auto-unfollow' || name === 'auto-follow') loadAutomationSettings();
+  else if (name === 'queue') loadQueue(1);
+  else if (name === 'blacklist') loadBlacklist();
+  else if (name === 'activity') loadActivity(1);
+}
+
+// ==================== DASHBOARD ====================
+async function loadDashboard() {
+  const [stats, activity] = await Promise.all([
+    api('GET', '/api/stats/dashboard'),
+    api('GET', '/api/stats/activity?per_page=8'),
+  ]);
+
+  document.getElementById('stat-following').textContent = stats.total_following ?? '—';
+  document.getElementById('stat-nfb').textContent = stats.not_following_back ?? '—';
+  document.getElementById('stat-fb').textContent = stats.following_back ?? '—';
+  document.getElementById('stat-unf').textContent = stats.unfollowed_this_week ?? '—';
+
+  const fToday = stats.follows_today || 0;
+  const fLimit = stats.follow_limit_today || 1;
+  const ufToday = stats.unfollows_today || 0;
+  const ufLimit = stats.unfollow_limit_today || 1;
+
+  document.getElementById('today-follows').textContent = `${fToday} / ${fLimit}`;
+  document.getElementById('today-unfollows').textContent = `${ufToday} / ${ufLimit}`;
+  document.getElementById('follows-bar').style.width = Math.min(100, (fToday/fLimit)*100) + '%';
+  document.getElementById('unfollows-bar').style.width = Math.min(100, (ufToday/ufLimit)*100) + '%';
+
+  const afEl = document.getElementById('status-auto-follow');
+  afEl.className = stats.auto_follow_enabled ? 'badge-green' : 'badge-gray';
+  afEl.textContent = stats.auto_follow_enabled ? 'On' : 'Off';
+
+  const aufEl = document.getElementById('status-auto-unfollow');
+  aufEl.className = stats.auto_unfollow_enabled ? 'badge-green' : 'badge-gray';
+  aufEl.textContent = stats.auto_unfollow_enabled ? 'On' : 'Off';
+
+  document.getElementById('status-queue').textContent = `${stats.queue_count ?? 0} queued`;
+  document.getElementById('status-blacklist').textContent = `${stats.blacklist_count ?? 0} blocked`;
+
+  const recentEl = document.getElementById('recent-activity');
+  if (activity.logs && activity.logs.length) {
+    recentEl.innerHTML = activity.logs.map(l => `
+      <div class="flex items-center gap-3 py-1.5">
+        <span class="flex-shrink-0 ${actionBadgeClass(l.action_type)}">${l.action_type}</span>
+        <span class="text-sm text-slate-300 truncate">${l.target_username ? '@' + l.target_username : (l.details || '')}</span>
+        <span class="ml-auto text-xs text-slate-600 flex-shrink-0">${timeAgo(l.timestamp)}</span>
+      </div>
+    `).join('');
+  } else {
+    recentEl.innerHTML = '<p class="text-sm text-slate-500">No activity yet. Sync your following list to get started.</p>';
+  }
+}
+
+async function syncFollowing() {
+  const btn = document.getElementById('sync-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spinner"></span><span>Syncing...</span>';
+  try {
+    const result = await api('POST', '/api/follows/sync');
+    toast(`Sync complete: ${result.total_following} following`, 'success');
+    loadDashboard();
+  } catch(e) {
+    toast('Sync failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>Sync from Instagram`;
+  }
+}
+
+// ==================== FOLLOWING ====================
+async function loadFollowing(page) {
+  currentFollowPage = page;
+  const filter = document.getElementById('follow-filter').value;
+  const data = await api('GET', `/api/follows/?filter=${filter}&page=${page}&per_page=50`);
+
+  const tbody = document.getElementById('following-table-body');
+  if (!data.records || data.records.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">No records found. Try syncing first.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.records.map(r => `
+    <tr class="table-row">
+      <td class="px-4 py-3">
+        <input type="checkbox" class="follow-checkbox rounded border-slate-600 bg-slate-800" value="${r.target_user_id}" onchange="updateSelection()" />
+      </td>
+      <td class="px-4 py-3">
+        <div class="flex items-center gap-2">
+          <img src="${r.target_profile_pic || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full object-cover bg-slate-700" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><circle cx=%2212%22 cy=%2212%22 r=%2212%22 fill=%22%23334155%22/></svg>'" />
+          <div>
+            <p class="font-medium text-white text-sm">@${r.target_username}</p>
+            ${r.target_full_name ? `<p class="text-xs text-slate-500">${r.target_full_name}</p>` : ''}
+          </div>
+        </div>
+      </td>
+      <td class="px-4 py-3">${followBackBadge(r.followed_back)}</td>
+      <td class="px-4 py-3 text-xs text-slate-400">${r.followed_at ? formatDate(r.followed_at) : '—'}${r.days_since_follow !== null ? ` <span class="text-slate-600">(${r.days_since_follow}d ago)</span>` : ''}</td>
+      <td class="px-4 py-3"><span class="badge-gray text-xs">${r.source}</span></td>
+      <td class="px-4 py-3 text-right">
+        <div class="flex gap-1 justify-end">
+          <button onclick="blacklistUser('${r.target_user_id}', '${r.target_username}')" title="Blacklist" class="p-1.5 text-slate-500 hover:text-yellow-400 transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+          </button>
+          ${r.is_active ? `<button onclick="quickUnfollow('${r.target_user_id}', '${r.target_username}', this)" title="Unfollow" class="p-1.5 text-slate-500 hover:text-red-400 transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"/></svg>
+          </button>` : ''}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  document.getElementById('following-total').textContent = `${data.total} accounts`;
+  document.getElementById('follow-prev-btn').disabled = page <= 1;
+  document.getElementById('follow-next-btn').disabled = page * 50 >= data.total;
+}
+
+function followBackBadge(val) {
+  if (val === true) return '<span class="badge-green">Follows back</span>';
+  if (val === false) return '<span class="badge-red">Not following back</span>';
+  return '<span class="badge-gray">Unknown</span>';
+}
+
+function updateSelection() {
+  selectedFollowIds.clear();
+  document.querySelectorAll('.follow-checkbox:checked').forEach(cb => selectedFollowIds.add(cb.value));
+  const count = selectedFollowIds.size;
+  const btn = document.getElementById('unfollow-selected-btn');
+  btn.classList.toggle('hidden', count === 0);
+  document.getElementById('selected-count').textContent = count;
+}
+
+function toggleSelectAll(cb) {
+  document.querySelectorAll('.follow-checkbox').forEach(c => c.checked = cb.checked);
+  updateSelection();
+}
+
+async function unfollowSelected() {
+  if (selectedFollowIds.size === 0) return;
+  if (!confirm(`Unfollow ${selectedFollowIds.size} accounts?`)) return;
+  const btn = document.getElementById('unfollow-selected-btn');
+  btn.disabled = true;
+  const result = await api('POST', '/api/follows/unfollow', { user_ids: [...selectedFollowIds] });
+  const succeeded = result.results.filter(r => r.success).length;
+  toast(`Unfollowed ${succeeded}/${selectedFollowIds.size} accounts`, 'success');
+  selectedFollowIds.clear();
+  btn.classList.add('hidden');
+  loadFollowing(currentFollowPage);
+}
+
+async function quickUnfollow(userId, username, btn) {
+  if (!confirm(`Unfollow @${username}?`)) return;
+  btn.disabled = true;
+  await api('POST', '/api/follows/unfollow', { user_ids: [userId] });
+  toast(`Unfollowed @${username}`, 'success');
+  loadFollowing(currentFollowPage);
+}
+
+function blacklistUser(userId, username) {
+  const reason = prompt(`Add @${username} to blacklist. Reason (optional):`);
+  if (reason === null) return;
+  addBlacklistEntry(username, reason);
+}
+
+// ==================== AUTOMATION SETTINGS ====================
+async function loadAutomationSettings() {
+  const s = await api('GET', '/api/automation/settings');
+  automationSettings = s;
+
+  // Toggles
+  ['auto_unfollow_enabled', 'auto_follow_enabled', 'unfollow_only_non_followers'].forEach(key => {
+    const el = document.getElementById('toggle-' + key);
+    if (el) {
+      el.className = `toggle ${s[key] ? 'on' : 'off'}`;
+      el.innerHTML = '<span class="toggle-knob"></span>';
+    }
+  });
+
+  // Ranges
+  ['unfollow_after_days', 'unfollow_per_day', 'follow_per_day', 'mutual_follows_threshold', 'scan_depth'].forEach(key => {
+    const range = document.getElementById('range-' + key);
+    const val = document.getElementById('val-' + key);
+    if (range && s[key] !== undefined) {
+      range.value = s[key];
+      if (val) val.textContent = s[key];
+    }
+  });
+
+  // Number inputs
+  ['active_hours_start', 'active_hours_end', 'follow_delay_min', 'follow_delay_max'].forEach(key => {
+    const el = document.getElementById('input-' + key);
+    if (el && s[key] !== undefined) el.value = s[key];
+  });
+
+  // Update delay labels
+  updateRangeVal('follow_delay_min');
+  updateRangeVal('follow_delay_max');
+
+  // Stats
+  if (document.getElementById('uf-today')) {
+    document.getElementById('uf-today').textContent = s.unfollows_today ?? 0;
+    document.getElementById('uf-limit').textContent = s.unfollow_per_day ?? 0;
+  }
+  if (document.getElementById('f-today')) {
+    document.getElementById('f-today').textContent = s.follows_today ?? 0;
+    document.getElementById('f-limit').textContent = s.follow_per_day ?? 0;
+    document.getElementById('f-queue').textContent = '—';
+    document.getElementById('f-last-scan').textContent = s.last_scan_run ? formatDate(s.last_scan_run) : 'Never';
+  }
+}
+
+function updateRangeVal(key) {
+  const range = document.getElementById('range-' + key);
+  const val = document.getElementById('val-' + key);
+  const input = document.getElementById('input-' + key);
+  const source = range || input;
+  if (source && val) val.textContent = source.value;
+}
+
+async function toggleSetting(key) {
+  const current = automationSettings[key];
+  const newVal = !current;
+  const result = await api('PATCH', '/api/automation/settings', { [key]: newVal });
+  automationSettings = result;
+  const el = document.getElementById('toggle-' + key);
+  if (el) {
+    el.className = `toggle ${newVal ? 'on' : 'off'}`;
+    el.innerHTML = '<span class="toggle-knob"></span>';
+  }
+  toast(`${key.replace(/_/g, ' ')} ${newVal ? 'enabled' : 'disabled'}`, 'success');
+}
+
+async function saveSetting(key, value) {
+  const parsed = isNaN(value) ? value : Number(value);
+  const result = await api('PATCH', '/api/automation/settings', { [key]: parsed });
+  automationSettings = result;
+}
+
+async function triggerScan() {
+  await api('POST', '/api/automation/scan');
+  toast('Scan started in background. Check the Follow Queue in a few minutes.', 'success');
+}
+
+async function triggerUnfollow() {
+  await api('POST', '/api/automation/run-unfollow');
+  toast('Unfollow job triggered.', 'success');
+}
+
+// ==================== QUEUE ====================
+async function loadQueue(page) {
+  currentQueuePage = page;
+  const data = await api('GET', `/api/follows/queue?page=${page}&per_page=50`);
+
+  document.getElementById('queue-count-badge').textContent = `${data.total} queued`;
+
+  const tbody = document.getElementById('queue-table-body');
+  if (!data.items || data.items.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">Queue is empty. Click "Scan for New Accounts" to populate it.</td></tr>';
+    document.getElementById('queue-total').textContent = '0 accounts';
+    return;
+  }
+
+  tbody.innerHTML = data.items.map(i => `
+    <tr class="table-row">
+      <td class="px-4 py-3">
+        <div class="flex items-center gap-2">
+          <img src="${i.target_profile_pic || ''}" class="w-8 h-8 rounded-full object-cover bg-slate-700" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><circle cx=%2212%22 cy=%2212%22 r=%2212%22 fill=%22%23334155%22/></svg>'" />
+          <div>
+            <p class="font-medium text-white text-sm">@${i.target_username}</p>
+            ${i.target_full_name ? `<p class="text-xs text-slate-500">${i.target_full_name}</p>` : ''}
+          </div>
+        </div>
+      </td>
+      <td class="px-4 py-3"><span class="badge-purple">${i.mutual_count} mutual</span></td>
+      <td class="px-4 py-3 text-xs text-slate-400">${i.source}</td>
+      <td class="px-4 py-3 text-xs text-slate-400">${formatDate(i.added_at)}</td>
+      <td class="px-4 py-3 text-right">
+        <button onclick="removeFromQueue(${i.id})" class="p-1.5 text-slate-500 hover:text-red-400 transition-colors" title="Remove">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+
+  document.getElementById('queue-total').textContent = `${data.total} accounts`;
+  document.getElementById('queue-prev-btn').disabled = page <= 1;
+  document.getElementById('queue-next-btn').disabled = page * 50 >= data.total;
+}
+
+async function removeFromQueue(id) {
+  await api('DELETE', `/api/follows/queue/${id}`);
+  loadQueue(currentQueuePage);
+}
+
+async function clearQueue() {
+  if (!confirm('Clear the entire follow queue?')) return;
+  await api('DELETE', '/api/follows/queue');
+  toast('Queue cleared', 'success');
+  loadQueue(1);
+}
+
+// ==================== BLACKLIST ====================
+async function loadBlacklist() {
+  const data = await api('GET', '/api/blacklist/?per_page=100');
+  document.getElementById('blacklist-count-badge').textContent = `${data.total} blocked`;
+  const tbody = document.getElementById('blacklist-table-body');
+  if (!data.items || data.items.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">No entries. Add accounts you never want to follow.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.items.map(i => `
+    <tr class="table-row">
+      <td class="px-4 py-3 font-medium text-white">@${i.target_username}</td>
+      <td class="px-4 py-3 text-sm text-slate-400">${i.reason || '—'}</td>
+      <td class="px-4 py-3 text-xs text-slate-400">${formatDate(i.created_at)}</td>
+      <td class="px-4 py-3 text-right">
+        <button onclick="removeFromBlacklist(${i.id})" class="p-1.5 text-slate-500 hover:text-red-400 transition-colors">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function addToBlacklist() {
+  const username = document.getElementById('bl-username').value.trim().replace('@', '');
+  const reason = document.getElementById('bl-reason').value.trim();
+  if (!username) return;
+  await addBlacklistEntry(username, reason);
+  document.getElementById('bl-username').value = '';
+  document.getElementById('bl-reason').value = '';
+}
+
+async function addBlacklistEntry(username, reason) {
+  try {
+    await api('POST', '/api/blacklist/', { username, reason: reason || '' });
+    toast(`@${username} added to blacklist`, 'success');
+    loadBlacklist();
+  } catch(e) {
+    toast(e.message, 'error');
+  }
+}
+
+async function removeFromBlacklist(id) {
+  await api('DELETE', `/api/blacklist/${id}`);
+  toast('Removed from blacklist', 'success');
+  loadBlacklist();
+}
+
+// ==================== ACTIVITY LOG ====================
+async function loadActivity(page) {
+  currentActivityPage = page;
+  const filter = document.getElementById('activity-filter').value;
+  const data = await api('GET', `/api/stats/activity?page=${page}&per_page=50&action_type=${filter}`);
+
+  const tbody = document.getElementById('activity-table-body');
+  if (!data.logs || data.logs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">No activity logged yet.</td></tr>';
+    document.getElementById('activity-total').textContent = '0 entries';
+    return;
+  }
+
+  tbody.innerHTML = data.logs.map(l => `
+    <tr class="table-row">
+      <td class="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">${formatDateTime(l.timestamp)}</td>
+      <td class="px-4 py-3"><span class="${actionBadgeClass(l.action_type)}">${l.action_type}</span></td>
+      <td class="px-4 py-3 text-sm text-slate-300">${l.target_username ? '@' + l.target_username : '—'}</td>
+      <td class="px-4 py-3 text-xs text-slate-500 max-w-xs truncate">${l.details || '—'}</td>
+      <td class="px-4 py-3 text-center">
+        ${l.success ? '<span class="text-green-400">✓</span>' : '<span class="text-red-400">✗</span>'}
+      </td>
+    </tr>
+  `).join('');
+
+  document.getElementById('activity-total').textContent = `${data.total} entries`;
+  document.getElementById('activity-prev-btn').disabled = page <= 1;
+  document.getElementById('activity-next-btn').disabled = page * 50 >= data.total;
+}
+
+// ==================== UTILITIES ====================
+async function api(method, path, body) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || 'Request failed');
+  }
+  return res.json();
+}
+
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type === 'error' ? 'bg-red-900 text-red-200 border border-red-700' : 'bg-green-900 text-green-200 border border-green-700'}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatDateTime(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function timeAgo(iso) {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs/24)}d ago`;
+}
+
+function actionBadgeClass(type) {
+  const map = {
+    follow: 'badge-green',
+    unfollow: 'badge-red',
+    sync: 'badge-purple',
+    scan: 'badge-purple',
+    login: 'badge-yellow',
+    logout: 'badge-gray',
+    blacklist: 'badge-yellow',
+    error: 'badge-red',
+  };
+  return map[type] || 'badge-gray';
+}
+
+// Start
+init();
+</script>
+</body>
+</html>
