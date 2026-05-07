@@ -133,7 +133,7 @@ def _do_login(username: str, password: str, session_json: Optional[str]):
                 try:
                     settings = json.loads(session_json)
                     cl.set_settings(settings)
-                    cl.login(username, password)
+                    _do_login_call(cl, username, password)
                     logger.info("Logged in via saved session for %s", username)
                     _client = cl
                     login_state["status"] = "logged_in"
@@ -143,17 +143,13 @@ def _do_login(username: str, password: str, session_json: Optional[str]):
                     cl = _make_client()
 
             # Fresh login
-            cl.login(username, password)
+            _do_login_call(cl, username, password)
             _client = cl
             login_state["status"] = "logged_in"
-            logger.info("Fresh login successful for %s", username)
+            logger.info("Fresh login successful for %s (user_id=%s)", username, cl.user_id)
 
         except ChallengeRequired:
-            # challenge_code_handler already updated login_state
-            # After code is submitted the login call will resume; wait here
             logger.info("Challenge required — waiting for code submission")
-            # instagrapi blocks inside login() until the handler returns,
-            # so if we reach here the challenge was resolved (or timed out).
             if _client is None:
                 login_state["status"] = "error"
                 login_state["error"] = "Challenge timed out or failed"
@@ -172,6 +168,31 @@ def _do_login(username: str, password: str, session_json: Optional[str]):
             login_state["status"] = "error"
             login_state["error"] = str(e)
             logger.error("Login failed: %s", e)
+
+
+def _do_login_call(cl: Client, username: str, password: str):
+    """
+    Call cl.login() and tolerate the TypeError / AttributeError that instagrapi
+    sometimes raises when parsing Instagram's response (e.g. user_id comes back
+    as None from the API). If the call raises but cl.user_id is still populated
+    we consider it a success.
+    """
+    try:
+        cl.login(username, password)
+    except (TypeError, AttributeError) as e:
+        # instagrapi called int() / accessed an attr on None in the response.
+        # Check whether we're actually logged in despite the internal error.
+        if cl.user_id:
+            logger.warning(
+                "Login raised %s internally but user_id=%s — treating as success",
+                e, cl.user_id,
+            )
+            return
+        raise Exception(
+            "Instagram returned an unexpected response during login. "
+            "Make sure your username/password are correct and try again. "
+            f"(internal: {e})"
+        )
 
 
 def get_session_json() -> Optional[str]:
