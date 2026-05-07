@@ -558,6 +558,7 @@ let currentQueuePage = 1;
 let currentActivityPage = 1;
 let automationSettings = {};
 let selectedFollowIds = new Set();
+let pendingChallengeType = 'challenge';  // 'challenge' | 'totp'
 
 // ==================== INIT ====================
 async function init() {
@@ -605,9 +606,11 @@ function pollLoginStatus() {
       showApp(status.username);
     } else if (status.status === 'challenge_required') {
       clearInterval(interval);
+      pendingChallengeType = 'challenge';
       showChallengeForm(status.challenge_method);
     } else if (status.status === 'totp_required') {
       clearInterval(interval);
+      pendingChallengeType = 'totp';
       showChallengeForm('totp');
     } else if (status.status === 'error') {
       clearInterval(interval);
@@ -625,7 +628,7 @@ function showChallengeForm(method) {
   const desc = {
     email: 'Instagram sent a verification code to your email.',
     sms: 'Instagram sent a verification code via SMS.',
-    totp: 'Enter your two-factor authentication code.',
+    totp: 'Open your authenticator app and enter the 6-digit code.',
   };
   document.getElementById('challenge-desc').textContent = desc[method] || 'Enter the verification code from Instagram.';
   hideStatusMsg();
@@ -634,7 +637,8 @@ function showChallengeForm(method) {
 async function submitChallenge() {
   const code = document.getElementById('challenge-code').value.trim();
   if (!code) return;
-  await api('POST', '/api/auth/challenge', { code });
+  const endpoint = pendingChallengeType === 'totp' ? '/api/auth/totp' : '/api/auth/challenge';
+  await api('POST', endpoint, { code });
   showStatusMsg('Verifying...', 'info');
   pollLoginStatus();
 }

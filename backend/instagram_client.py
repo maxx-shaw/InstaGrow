@@ -39,8 +39,16 @@ login_state = {
 
 _challenge_code: Optional[str] = None
 _challenge_event = threading.Event()
-_totp_code: Optional[str] = None
-_totp_event = threading.Event()
+
+# TOTP 2FA state — keeps the pending client + identifier alive between the
+# TwoFactorRequired exception and the user submitting their authenticator code.
+_totp_state: dict = {
+    "code": None,
+    "identifier": None,
+    "client": None,
+    "username": None,
+    "event": threading.Event(),
+}
 
 
 # ---------------------------------------------------------------------------
@@ -80,9 +88,8 @@ def submit_challenge_code(code: str):
 
 
 def submit_totp_code(code: str):
-    global _totp_code
-    _totp_code = code
-    _totp_event.set()
+    _totp_state["code"] = code
+    _totp_state["event"].set()
 
 
 # ---------------------------------------------------------------------------
@@ -157,8 +164,40 @@ def _do_login(username: str, password: str, session_json: Optional[str]):
                 login_state["status"] = "logged_in"
 
         except TwoFactorRequired:
+            # Extract the identifier Instagram needs to verify the TOTP code
+            two_factor_info = cl.last_json.get("two_factor_info", {})
+            identifier = two_factor_info.get("two_factor_identifier", "")
+            _totp_state["identifier"] = identifier
+            _totp_state["client"] = cl
+            _totp_state["username"] = username
+            _totp_state["code"] = None
+            _totp_state["event"].clear()
             login_state["status"] = "totp_required"
-            login_state["error"] = "Two-factor authentication required"
+            login_state["error"] = None
+
+            # Block this thread until the user submits their authenticator code
+            got_code = _totp_state["event"].wait(timeout=300)
+            code = _totp_state["code"]
+
+            if not got_code or not code:
+                login_state["status"] = "error"
+                login_state["error"] = "Authenticator code timed out — please try again"
+                return
+
+            try:
+                cl.two_factor_login(
+                    verification_code=code,
+                    two_factor_identifier=identifier,
+                    username=username,
+                    verification_method="3",  # 3 = TOTP authenticator app
+                )
+                _client = cl
+                login_state["status"] = "logged_in"
+                logger.info("TOTP 2FA login successful for %s", username)
+            except Exception as e:
+                login_state["status"] = "error"
+                login_state["error"] = f"2FA verification failed: {e}"
+                logger.error("TOTP verification failed: %s", e)
 
         except BadPassword:
             login_state["status"] = "error"
