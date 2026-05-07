@@ -1,4 +1,5 @@
 import datetime
+import os
 from sqlalchemy import (
     create_engine, Column, Integer, String, Boolean,
     DateTime, Text, Float
@@ -6,7 +7,8 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./instagrow.db"
+DB_PATH = os.environ.get("INSTAGROW_DB_PATH", "./instagrow.db")
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_PATH}"
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
 )
