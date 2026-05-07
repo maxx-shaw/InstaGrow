@@ -211,27 +211,56 @@ def _do_login(username: str, password: str, session_json: Optional[str]):
 
 def _do_login_call(cl: Client, username: str, password: str):
     """
-    Call cl.login() and tolerate the TypeError / AttributeError that instagrapi
-    sometimes raises when parsing Instagram's response (e.g. user_id comes back
-    as None from the API). If the call raises but cl.user_id is still populated
-    we consider it a success.
+    Call cl.login() and recover gracefully from the TypeError that instagrapi
+    raises when Instagram's response contains a None where an int is expected
+    (a common API response format change). Tries multiple strategies to recover
+    a valid user_id before giving up.
     """
     try:
         cl.login(username, password)
+        return  # clean success
     except (TypeError, AttributeError) as e:
-        # instagrapi called int() / accessed an attr on None in the response.
-        # Check whether we're actually logged in despite the internal error.
-        if cl.user_id:
-            logger.warning(
-                "Login raised %s internally but user_id=%s — treating as success",
-                e, cl.user_id,
-            )
-            return
-        raise Exception(
-            "Instagram returned an unexpected response during login. "
-            "Make sure your username/password are correct and try again. "
-            f"(internal: {e})"
+        logger.warning("cl.login() raised %s — attempting recovery", e)
+
+    # Strategy 1: user_id was already set before the error occurred
+    if cl.user_id is not None and cl.user_id != 0:
+        logger.info("Recovery S1: user_id=%s already set", cl.user_id)
+        return
+
+    # Strategy 2: pull user_id from the raw last_json response
+    try:
+        last = cl.last_json or {}
+        user = (
+            last.get("logged_in_user")
+            or last.get("user")
+            or {}
         )
+        pk = user.get("pk") or user.get("pk_id") or user.get("id")
+        if pk:
+            cl.user_id = int(str(pk).split(".")[0])
+            cl.username = username
+            logger.info("Recovery S2: extracted user_id=%s from last_json", cl.user_id)
+            return
+    except Exception as ex:
+        logger.warning("Recovery S2 failed: %s", ex)
+
+    # Strategy 3: verify session is valid regardless (Instagram may have logged
+    # us in even though response parsing failed)
+    try:
+        feed = cl.get_timeline_feed()
+        if feed and cl.user_id:
+            logger.info("Recovery S3: session valid, user_id=%s", cl.user_id)
+            return
+    except Exception as ex:
+        logger.warning("Recovery S3 failed: %s", ex)
+
+    # All recovery strategies failed — credentials or account issue
+    raise Exception(
+        "Could not complete Instagram login. "
+        "Please double-check your username and password, then try again. "
+        "If correct, Instagram may be temporarily blocking automated access — "
+        "wait a few minutes and retry."
+    )
 
 
 def get_session_json() -> Optional[str]:
