@@ -20,6 +20,11 @@ class ChallengeRequest(BaseModel):
     code: str
 
 
+class SessionLoginRequest(BaseModel):
+    username: str
+    session_id: str
+
+
 @router.post("/login")
 def login(req: LoginRequest, db: Session = Depends(get_db)):
     """Start Instagram login (may require challenge/2FA — poll /auth/status)."""
@@ -31,6 +36,15 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     session_json = account.session_data if account else None
 
     ig.login_async(req.username, req.password, session_json)
+    return {"status": "logging_in"}
+
+
+@router.post("/login-session")
+def login_session(req: SessionLoginRequest, db: Session = Depends(get_db)):
+    """Login using a browser session ID cookie — avoids password-based login blocks."""
+    if ig.login_state["status"] == "logged_in":
+        return {"status": "already_logged_in"}
+    ig.login_by_sessionid_async(req.username, req.session_id)
     return {"status": "logging_in"}
 
 

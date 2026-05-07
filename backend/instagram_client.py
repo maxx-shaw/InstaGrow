@@ -116,13 +116,45 @@ def is_logged_in() -> bool:
 # ---------------------------------------------------------------------------
 
 def login_async(username: str, password: str, session_json: Optional[str] = None):
-    """Start login in a background thread. Check login_state for progress."""
+    """Start password-based login in a background thread."""
     t = threading.Thread(
         target=_do_login,
         args=(username, password, session_json),
         daemon=True,
     )
     t.start()
+
+
+def login_by_sessionid_async(username: str, session_id: str):
+    """Start session-ID login in a background thread."""
+    t = threading.Thread(
+        target=_do_login_sessionid,
+        args=(username, session_id),
+        daemon=True,
+    )
+    t.start()
+
+
+def _do_login_sessionid(username: str, session_id: str):
+    global _client
+    login_state["status"] = "logging_in"
+    login_state["error"] = None
+    login_state["username"] = username
+
+    with _client_lock:
+        try:
+            cl = _make_client()
+            cl.login_by_sessionid(session_id)
+            # Verify it worked and populate user_id / username
+            user = cl.user_info(cl.user_id)
+            cl.username = user.username
+            _client = cl
+            login_state["status"] = "logged_in"
+            logger.info("Session ID login successful for %s (user_id=%s)", username, cl.user_id)
+        except Exception as e:
+            login_state["status"] = "error"
+            login_state["error"] = f"Session ID login failed: {e}. Make sure you copied the full sessionid cookie value."
+            logger.error("Session ID login failed: %s", e)
 
 
 def _do_login(username: str, password: str, session_json: Optional[str]):

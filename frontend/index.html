@@ -137,21 +137,59 @@
 
     <div class="card">
       <div id="login-form-section">
-        <h2 class="text-lg font-semibold mb-4">Connect Your Account</h2>
-        <div class="space-y-3">
-          <div>
-            <label class="block text-xs text-slate-400 mb-1">Instagram Username</label>
-            <input id="login-username" type="text" placeholder="your_username" class="input" />
-          </div>
-          <div>
-            <label class="block text-xs text-slate-400 mb-1">Password</label>
-            <input id="login-password" type="password" placeholder="••••••••" class="input" />
-          </div>
-          <button id="login-btn" onclick="doLogin()" class="btn-primary w-full mt-2 flex items-center justify-center gap-2">
-            <span>Connect Account</span>
+        <!-- Tab switcher -->
+        <div style="display:flex;gap:0;margin-bottom:1.25rem;background:#0f172a;border-radius:0.5rem;padding:3px;">
+          <button id="tab-password" onclick="switchLoginTab('password')"
+            style="flex:1;padding:0.375rem 0.5rem;border-radius:0.375rem;font-size:0.8rem;font-weight:500;border:none;cursor:pointer;transition:all 0.15s;background:linear-gradient(to right,#9333ea,#db2777);color:#fff;">
+            Username &amp; Password
+          </button>
+          <button id="tab-session" onclick="switchLoginTab('session')"
+            style="flex:1;padding:0.375rem 0.5rem;border-radius:0.375rem;font-size:0.8rem;font-weight:500;border:none;cursor:pointer;transition:all 0.15s;background:transparent;color:#94a3b8;">
+            Session ID <span style="font-size:0.65rem;background:rgba(168,85,247,0.2);color:#c084fc;border-radius:4px;padding:1px 5px;margin-left:3px;">Recommended</span>
           </button>
         </div>
-        <p class="text-xs text-slate-500 mt-3 text-center">Your credentials are only used to connect to Instagram's API and are stored locally.</p>
+
+        <!-- Password tab -->
+        <div id="tab-password-content">
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Instagram Username</label>
+              <input id="login-username" type="text" placeholder="your_username" class="input" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Password</label>
+              <input id="login-password" type="password" placeholder="••••••••" class="input" />
+            </div>
+            <button id="login-btn" onclick="doLogin()" class="btn-primary w-full mt-2" style="justify-content:center;">
+              Connect Account
+            </button>
+          </div>
+        </div>
+
+        <!-- Session ID tab -->
+        <div id="tab-session-content" style="display:none;">
+          <div class="space-y-3">
+            <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:0.5rem;padding:0.75rem;font-size:0.78rem;color:#c4b5fd;line-height:1.5;">
+              <strong style="display:block;margin-bottom:0.25rem;">How to get your Session ID:</strong>
+              1. Open <strong>instagram.com</strong> in Chrome/Edge and log in normally<br/>
+              2. Press <strong>F12</strong> → Application tab → Cookies → instagram.com<br/>
+              3. Find the cookie named <strong>sessionid</strong> and copy its value
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Instagram Username</label>
+              <input id="session-username" type="text" placeholder="your_username" class="input" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Session ID</label>
+              <input id="session-id" type="text" placeholder="Paste sessionid cookie value here" class="input" style="font-size:0.75rem;" />
+            </div>
+            <button onclick="doSessionLogin()" class="btn-primary w-full" style="justify-content:center;">
+              Connect via Session ID
+            </button>
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-500 mt-3 text-center">Credentials are stored locally on your machine only.</p>
       </div>
 
       <div id="challenge-section" style="display:none">
@@ -644,6 +682,30 @@ function showApp(username) {
   document.getElementById('app-screen').style.display = 'flex';
   document.getElementById('sidebar-username').textContent = '@' + (username || '');
   loadDashboard();
+}
+
+// ==================== LOGIN TABS ====================
+function switchLoginTab(tab) {
+  const isPassword = tab === 'password';
+  document.getElementById('tab-password-content').style.display = isPassword ? 'block' : 'none';
+  document.getElementById('tab-session-content').style.display  = isPassword ? 'none'  : 'block';
+  const activeStyle  = 'background:linear-gradient(to right,#9333ea,#db2777);color:#fff;';
+  const inactiveStyle = 'background:transparent;color:#94a3b8;';
+  document.getElementById('tab-password').style.cssText = (isPassword  ? activeStyle : inactiveStyle) + 'flex:1;padding:0.375rem 0.5rem;border-radius:0.375rem;font-size:0.8rem;font-weight:500;border:none;cursor:pointer;transition:all 0.15s;';
+  document.getElementById('tab-session').style.cssText  = (!isPassword ? activeStyle : inactiveStyle) + 'flex:1;padding:0.375rem 0.5rem;border-radius:0.375rem;font-size:0.8rem;font-weight:500;border:none;cursor:pointer;transition:all 0.15s;';
+}
+
+async function doSessionLogin() {
+  const username  = document.getElementById('session-username').value.trim();
+  const sessionId = document.getElementById('session-id').value.trim();
+  if (!username || !sessionId) { showMsg('Please enter both username and session ID', 'error'); return; }
+  showStatusMsg('Connecting...', 'info');
+  try {
+    await api('POST', '/api/auth/login-session', { username, session_id: sessionId });
+    pollLoginStatus();
+  } catch(e) {
+    showStatusMsg(e.message, 'error');
+  }
 }
 
 // ==================== AUTH ====================
