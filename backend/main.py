@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse
 
 from database import init_db
 from scheduler import start_scheduler
-from routers import auth, follows, automation, blacklist, stats
+from routers import auth, follows, automation, blacklist, whitelist, stats
 
 logging.basicConfig(
     level=logging.INFO,
@@ -43,6 +43,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(follows.router, prefix="/api")
 app.include_router(automation.router, prefix="/api")
 app.include_router(blacklist.router, prefix="/api")
+app.include_router(whitelist.router, prefix="/api")
 app.include_router(stats.router, prefix="/api")
 
 # Serve frontend

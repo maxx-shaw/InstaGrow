@@ -21,6 +21,7 @@ from database import (
     FollowRecord,
     FollowQueue,
     Blacklist,
+    Whitelist,
     AutomationSettings,
     ActivityLog,
 )
@@ -84,6 +85,13 @@ def _is_blacklisted(db, account_id: int, target_user_id: str) -> bool:
     ).first() is not None
 
 
+def _is_whitelisted(db, account_id: int, target_user_id: str) -> bool:
+    return db.query(Whitelist).filter(
+        Whitelist.account_id == account_id,
+        Whitelist.target_user_id == target_user_id,
+    ).first() is not None
+
+
 # ---------------------------------------------------------------------------
 # Job: Auto-unfollow
 # ---------------------------------------------------------------------------
@@ -121,7 +129,17 @@ def auto_unfollow_job():
         if s.unfollow_only_non_followers:
             query = query.filter(FollowRecord.followed_back != True)
 
-        candidates = query.order_by(FollowRecord.followed_at.asc()).all()
+        # Exclude whitelisted accounts
+        whitelist_ids = {
+            r.target_user_id
+            for r in db.query(Whitelist.target_user_id)
+            .filter(Whitelist.account_id == account.id)
+            .all()
+        }
+        candidates = [
+            r for r in query.order_by(FollowRecord.followed_at.asc()).all()
+            if r.target_user_id not in whitelist_ids
+        ]
 
         remaining = s.unfollow_per_day - s.unfollows_today
         batch = candidates[:remaining]

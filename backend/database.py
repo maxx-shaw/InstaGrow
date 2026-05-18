@@ -62,6 +62,17 @@ class Blacklist(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 
+class Whitelist(Base):
+    """Accounts to never unfollow."""
+    __tablename__ = "whitelist"
+    id = Column(Integer, primary_key=True, index=True)
+    account_id = Column(Integer, nullable=False, index=True)
+    target_user_id = Column(String, nullable=False)
+    target_username = Column(String, nullable=False)
+    reason = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+
 class FollowQueue(Base):
     """Accounts queued to be followed by the auto-follow job."""
     __tablename__ = "follow_queue"

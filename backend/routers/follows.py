@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 import instagram_client as ig
 from database import (
-    get_db, Account, FollowRecord, Blacklist, ActivityLog, FollowQueue
+    get_db, Account, FollowRecord, Blacklist, Whitelist, ActivityLog, FollowQueue
 )
 
 logger = logging.getLogger("instagrow.follows")
@@ -185,6 +185,14 @@ def manual_unfollow(req: UnfollowRequest, db: Session = Depends(get_db)):
         ).first()
         if not record:
             results.append({"user_id": uid, "success": False, "error": "Not found in follow list"})
+            continue
+        # Block unfollow if whitelisted
+        wl = db.query(Whitelist).filter(
+            Whitelist.account_id == account.id,
+            Whitelist.target_user_id == uid,
+        ).first()
+        if wl:
+            results.append({"user_id": uid, "success": False, "error": f"@{record.target_username} is whitelisted — remove from whitelist first"})
             continue
         try:
             ig.unfollow_user(uid, delay_min=10, delay_max=30)

@@ -301,6 +301,9 @@
       <div class="sidebar-link" onclick="showView('blacklist')" id="drawer-nav-blacklist">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg> Blacklist
       </div>
+      <div class="sidebar-link" onclick="showView('whitelist')" id="drawer-nav-whitelist">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg> Whitelist
+      </div>
       <div class="sidebar-link" onclick="showView('activity')" id="drawer-nav-activity">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg> Activity Log
       </div>
@@ -354,6 +357,10 @@
       <div class="sidebar-link" onclick="showView('blacklist')" id="nav-blacklist">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
         Blacklist
+      </div>
+      <div class="sidebar-link" onclick="showView('whitelist')" id="nav-whitelist">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        Whitelist
       </div>
       <div class="sidebar-link" onclick="showView('activity')" id="nav-activity">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
@@ -710,6 +717,48 @@
       </div>
     </div>
 
+    <!-- Whitelist View -->
+    <div id="view-whitelist" class="view" style="display:none">
+      <div class="flex items-center gap-3 mb-5">
+        <h1 class="text-xl font-bold">Whitelist</h1>
+        <span id="whitelist-count-badge" class="badge-green">0 protected</span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="card p-0 overflow-hidden table-scroll lg:col-span-2">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-800 bg-slate-900/40">
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">Username</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">Reason</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wide">Added</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wide">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="whitelist-table-body">
+              <tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">No entries. Add accounts you never want to unfollow.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h3 class="font-semibold mb-1">Add to Whitelist</h3>
+          <p class="text-xs text-slate-500 mb-4">These accounts will never be auto-unfollowed and can't be manually unfollowed without removing them first.</p>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Instagram Username</label>
+              <input id="wl-username" type="text" placeholder="username_here" class="input" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Reason (optional)</label>
+              <input id="wl-reason" type="text" placeholder="e.g. friend, partner, brand" class="input" />
+            </div>
+            <button onclick="addToWhitelist()" class="btn-primary w-full" style="justify-content:center;">Add to Whitelist</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Activity Log View -->
     <div id="view-activity" class="view" style="display:none">
       <div class="flex items-center gap-3 mb-5">
@@ -925,6 +974,7 @@ function showView(name) {
   else if (name === 'auto-unfollow' || name === 'auto-follow') loadAutomationSettings();
   else if (name === 'queue') loadQueue(1);
   else if (name === 'blacklist') loadBlacklist();
+  else if (name === 'whitelist') loadWhitelist();
   else if (name === 'activity') loadActivity(1);
 }
 
@@ -1268,6 +1318,50 @@ async function removeFromBlacklist(id) {
   await api('DELETE', `/api/blacklist/${id}`);
   toast('Removed from blacklist', 'success');
   loadBlacklist();
+}
+
+// ==================== WHITELIST ====================
+async function loadWhitelist() {
+  const data = await api('GET', '/api/whitelist/?per_page=100');
+  document.getElementById('whitelist-count-badge').textContent = `${data.total} protected`;
+  const tbody = document.getElementById('whitelist-table-body');
+  if (!data.items || data.items.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">No entries. Add accounts you never want to unfollow.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.items.map(i => `
+    <tr class="table-row">
+      <td class="px-4 py-3 font-medium text-white">@${i.target_username}</td>
+      <td class="px-4 py-3 text-sm text-slate-400">${i.reason || '—'}</td>
+      <td class="px-4 py-3 text-xs text-slate-400">${formatDate(i.created_at)}</td>
+      <td class="px-4 py-3 text-right">
+        <button onclick="removeFromWhitelist(${i.id})" class="p-1.5 text-slate-500 hover:text-red-400 transition-colors" title="Remove">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function addToWhitelist() {
+  const username = document.getElementById('wl-username').value.trim().replace('@', '');
+  const reason   = document.getElementById('wl-reason').value.trim();
+  if (!username) return;
+  try {
+    await api('POST', '/api/whitelist/', { username, reason });
+    toast(`@${username} added to whitelist`, 'success');
+    document.getElementById('wl-username').value = '';
+    document.getElementById('wl-reason').value = '';
+    loadWhitelist();
+  } catch(e) {
+    toast(e.message, 'error');
+  }
+}
+
+async function removeFromWhitelist(id) {
+  await api('DELETE', `/api/whitelist/${id}`);
+  toast('Removed from whitelist', 'success');
+  loadWhitelist();
 }
 
 // ==================== ACTIVITY LOG ====================
