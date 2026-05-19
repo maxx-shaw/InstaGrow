@@ -135,6 +135,36 @@ def login_by_sessionid_async(username: str, session_id: str):
     t.start()
 
 
+def _do_two_factor_login(cl: Client, username: str, code: str, identifier: str):
+    """Try two_factor_login; fall back to private_request on older/newer builds."""
+    if hasattr(cl, "two_factor_login"):
+        cl.two_factor_login(
+            verification_code=code,
+            two_factor_identifier=identifier,
+            username=username,
+            verification_method="3",  # 3 = TOTP authenticator app
+        )
+        return
+    # Fallback: hit the endpoint directly
+    result = cl.private_request(
+        "accounts/two_factor_login/",
+        {
+            "username": username,
+            "verificationCode": code,
+            "identifier": identifier,
+            "trust_this_device": "0",
+            "verification_method": "3",
+        },
+    )
+    logged_in_user = result.get("logged_in_user") or result.get("user")
+    if not logged_in_user:
+        raise Exception("Two-factor login returned no user — code may be wrong")
+    pk = logged_in_user.get("pk") or logged_in_user.get("pk_id")
+    if pk:
+        cl.user_id = int(str(pk).split(".")[0])
+    cl.username = username
+
+
 def _do_login_sessionid(username: str, session_id: str):
     global _client
     login_state["status"] = "logging_in"
@@ -151,6 +181,17 @@ def _do_login_sessionid(username: str, session_id: str):
             _client = cl
             login_state["status"] = "logged_in"
             logger.info("Session ID login successful for %s (user_id=%s)", username, cl.user_id)
+        except ChallengeRequired:
+            # Instagram flagged the session as suspicious (new IP/device).
+            # The user must open the Instagram app, accept the security
+            # notification, then copy a fresh sessionid cookie and try again.
+            login_state["status"] = "error"
+            login_state["error"] = (
+                "Instagram requires account verification. "
+                "Open the Instagram app, approve the security alert it sent you, "
+                "then copy a fresh sessionid cookie and try again."
+            )
+            logger.info("Session ID login blocked by challenge for %s", username)
         except Exception as e:
             login_state["status"] = "error"
             login_state["error"] = f"Session ID login failed: {e}. Make sure you copied the full sessionid cookie value."
@@ -217,12 +258,7 @@ def _do_login(username: str, password: str, session_json: Optional[str]):
                 return
 
             try:
-                cl.two_factor_login(
-                    verification_code=code,
-                    two_factor_identifier=identifier,
-                    username=username,
-                    verification_method="3",  # 3 = TOTP authenticator app
-                )
+                _do_two_factor_login(cl, username, code, identifier)
                 _client = cl
                 login_state["status"] = "logged_in"
                 logger.info("TOTP 2FA login successful for %s", username)
