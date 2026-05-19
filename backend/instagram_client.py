@@ -238,22 +238,20 @@ def _do_login(username: str, password: str, session_json: Optional[str]):
                 _client = cl
                 login_state["status"] = "logged_in"
                 logger.info("TOTP 2FA login successful for %s", username)
-            except ChallengeRequired:
-                # Instagram accepted the TOTP code but is now asking for an
-                # additional security checkpoint (UFAC). The user must open
-                # the Instagram app, approve the security notification, then
-                # restart the login.
-                login_state["status"] = "error"
-                login_state["error"] = (
-                    "Instagram accepted your 2FA code but then triggered a security "
-                    "checkpoint. Open the Instagram app, approve the security alert "
-                    "it sent you, then try logging in again."
-                )
-                logger.error("TOTP post-login checkpoint for %s", username)
             except Exception as e:
-                login_state["status"] = "error"
-                login_state["error"] = f"2FA verification failed: {e}"
-                logger.error("TOTP verification failed: %s", e)
+                err_str = str(e).lower()
+                if any(k in err_str for k in ("checkpoint", "ufac", "manual verification", "challenge")):
+                    login_state["status"] = "error"
+                    login_state["error"] = (
+                        "Instagram accepted your 2FA code but triggered a security checkpoint. "
+                        "Open the Instagram app, approve the security alert it sent you, "
+                        "then try logging in again."
+                    )
+                    logger.error("TOTP post-login checkpoint for %s", username)
+                else:
+                    login_state["status"] = "error"
+                    login_state["error"] = f"2FA verification failed: {e}"
+                    logger.error("TOTP verification failed: %s", e)
 
         except BadPassword:
             login_state["status"] = "error"
