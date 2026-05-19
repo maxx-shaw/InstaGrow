@@ -387,6 +387,54 @@
         </button>
       </div>
 
+      <!-- Live Activity Card -->
+      <div class="card mb-6" id="live-card">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span id="live-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#475569;flex-shrink:0;"></span>
+            <h3 class="text-sm font-semibold text-slate-300">Live Activity</h3>
+          </div>
+          <span id="live-job-label" class="badge-gray" style="font-size:0.7rem;">Idle</span>
+        </div>
+
+        <!-- Progress bar -->
+        <div id="live-progress-wrap" style="display:none;margin-bottom:0.875rem;">
+          <div class="flex justify-between text-xs text-slate-400 mb-1">
+            <span id="live-progress-label">Working...</span>
+            <span id="live-progress-count">0 / 0</span>
+          </div>
+          <div style="background:#1e293b;border-radius:9999px;height:8px;overflow:hidden;">
+            <div id="live-progress-bar" style="height:100%;width:0%;border-radius:9999px;background:linear-gradient(to right,#9333ea,#db2777);transition:width 0.4s ease;"></div>
+          </div>
+        </div>
+
+        <!-- Last action + today counters -->
+        <div class="flex flex-wrap gap-4">
+          <div style="flex:1;min-width:180px;">
+            <p class="text-xs text-slate-500 mb-1">Last action</p>
+            <p id="live-last-action" class="text-sm text-slate-300">—</p>
+            <p id="live-last-time" class="text-xs text-slate-600 mt-0.5">—</p>
+          </div>
+          <div style="display:flex;gap:1.5rem;">
+            <div class="text-center">
+              <p class="text-xs text-slate-500">Follows today</p>
+              <p id="live-follows-today" class="text-lg font-bold text-green-400">0</p>
+            </div>
+            <div class="text-center">
+              <p class="text-xs text-slate-500">Unfollows today</p>
+              <p id="live-unfollows-today" class="text-lg font-bold text-red-400">0</p>
+            </div>
+            <div class="text-center">
+              <p class="text-xs text-slate-500">Errors</p>
+              <p id="live-errors" class="text-lg font-bold text-yellow-400">0</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action feed -->
+        <div id="live-feed" style="margin-top:0.875rem;border-top:1px solid #1e293b;padding-top:0.75rem;display:flex;flex-direction:column;gap:0.375rem;max-height:130px;overflow-y:auto;"></div>
+      </div>
+
       <!-- Stats grid -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="stat-card">
@@ -836,6 +884,7 @@ function showApp(username) {
   document.getElementById('sidebar-username').textContent = handle;
   document.getElementById('mobile-username').textContent = handle;
   document.getElementById('drawer-username').textContent = handle;
+  startLiveStream();
   loadDashboard();
 }
 
@@ -936,6 +985,7 @@ function resetLoginBtn() {
 }
 
 async function doLogout() {
+  stopLiveStream();
   await api('POST', '/api/auth/logout');
   document.getElementById('challenge-section').style.display = 'none';
   document.getElementById('login-form-section').style.display = 'block';
@@ -1451,6 +1501,107 @@ function actionBadgeClass(type) {
   };
   return map[type] || 'badge-gray';
 }
+
+// ==================== LIVE ACTIVITY STREAM ====================
+let _liveSource = null;
+const _feedItems = [];
+
+function startLiveStream() {
+  if (_liveSource) return;
+  _liveSource = new EventSource('/api/stream/live');
+  _liveSource.onmessage = (e) => {
+    try { updateLiveCard(JSON.parse(e.data)); } catch(_) {}
+  };
+  _liveSource.onerror = () => {
+    _liveSource.close();
+    _liveSource = null;
+    setTimeout(startLiveStream, 5000);
+  };
+}
+
+function stopLiveStream() {
+  if (_liveSource) { _liveSource.close(); _liveSource = null; }
+}
+
+function updateLiveCard(s) {
+  const running = s.status === 'running';
+
+  // Status dot
+  const dot = document.getElementById('live-dot');
+  if (running) {
+    dot.style.background = '#a855f7';
+    dot.style.boxShadow = '0 0 0 0 rgba(168,85,247,0.6)';
+    dot.style.animation = 'pulse-dot 1.2s infinite';
+  } else {
+    dot.style.background = '#475569';
+    dot.style.boxShadow = 'none';
+    dot.style.animation = 'none';
+  }
+
+  // Job label
+  const label = document.getElementById('live-job-label');
+  if (running && s.job_type) {
+    const names = { unfollow: 'Auto-Unfollow', follow: 'Auto-Follow', scan: 'Scanning', check_follow_back: 'Checking' };
+    label.textContent = names[s.job_type] || s.job_type;
+    label.className = 'badge-purple';
+  } else {
+    label.textContent = 'Idle';
+    label.className = 'badge-gray';
+  }
+
+  // Progress bar
+  const wrap = document.getElementById('live-progress-wrap');
+  if (running && s.total > 0) {
+    wrap.style.display = 'block';
+    const pct = Math.min(100, Math.round((s.current / s.total) * 100));
+    document.getElementById('live-progress-bar').style.width = pct + '%';
+    document.getElementById('live-progress-count').textContent = `${s.current} / ${s.total}`;
+    const actionName = s.job_type === 'unfollow' ? 'Unfollowing' : s.job_type === 'follow' ? 'Following' : 'Processing';
+    document.getElementById('live-progress-label').textContent = `${actionName}${s.next_run_seconds ? ` · waiting ${s.next_run_seconds}s` : ''}...`;
+  } else {
+    wrap.style.display = 'none';
+  }
+
+  // Counters
+  document.getElementById('live-follows-today').textContent   = s.follows_today   || 0;
+  document.getElementById('live-unfollows-today').textContent = s.unfollows_today  || 0;
+  document.getElementById('live-errors').textContent          = s.errors_session   || 0;
+
+  // Last action
+  if (s.last_action && s.last_username) {
+    const icon = s.last_action_success ? '✓' : '✗';
+    const color = s.last_action_success ? '#4ade80' : '#f87171';
+    const verb = s.last_action === 'follow' ? 'Followed' : s.last_action === 'unfollow' ? 'Unfollowed' : s.last_action;
+    document.getElementById('live-last-action').innerHTML =
+      `<span style="color:${color}">${icon}</span> ${verb} <span style="color:#c084fc">@${s.last_username}</span>`;
+    document.getElementById('live-last-time').textContent =
+      s.last_action_time ? timeAgo(s.last_action_time) : '';
+
+    // Feed — dedupe by username+action
+    const key = `${s.last_action}:${s.last_username}:${s.last_action_time}`;
+    if (!_feedItems.includes(key)) {
+      _feedItems.unshift(key);
+      if (_feedItems.length > 30) _feedItems.pop();
+      const feed = document.getElementById('live-feed');
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;font-size:0.78rem;';
+      row.innerHTML = `<span style="color:${color};flex-shrink:0">${icon}</span>
+        <span style="color:#cbd5e1">${verb} <strong style="color:#c084fc">@${s.last_username}</strong></span>
+        <span style="margin-left:auto;color:#475569;flex-shrink:0">${timeAgo(s.last_action_time)}</span>`;
+      feed.prepend(row);
+      if (feed.children.length > 20) feed.lastChild.remove();
+    }
+  }
+}
+
+// Inject pulse keyframe once
+const _style = document.createElement('style');
+_style.textContent = `@keyframes pulse-dot {
+  0%   { box-shadow: 0 0 0 0 rgba(168,85,247,0.6); }
+  70%  { box-shadow: 0 0 0 7px rgba(168,85,247,0); }
+  100% { box-shadow: 0 0 0 0 rgba(168,85,247,0); }
+}`;
+document.head.appendChild(_style);
 
 // Start
 init();

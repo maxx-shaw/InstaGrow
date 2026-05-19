@@ -15,6 +15,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.cron import CronTrigger
 
 import instagram_client as ig
+import events as ev
 from database import (
     SessionLocal,
     Account,
@@ -146,32 +147,35 @@ def auto_unfollow_job():
 
         logger.info("Auto-unfollow: %d candidates, doing up to %d", len(candidates), len(batch))
 
-        for record in batch:
+        ev.job_start("unfollow", len(batch))
+
+        for idx, record in enumerate(batch, 1):
             if not ig.is_logged_in():
                 break
+            delay = random.randint(30, 90)
+            ev.job_action("unfollow", record.target_username, True, idx, delay_seconds=delay)
             try:
-                ig.unfollow_user(
-                    record.target_user_id,
-                    delay_min=30,
-                    delay_max=90,
-                )
+                ig.unfollow_user(record.target_user_id, delay_min=30, delay_max=90)
                 record.unfollowed_at = datetime.datetime.utcnow()
                 record.is_active = False
                 s.unfollows_today += 1
                 db.commit()
+                ev.job_action("unfollow", record.target_username, True, idx, delay_seconds=0)
                 _log(db, account.id, "unfollow",
                      target_username=record.target_username,
                      target_user_id=record.target_user_id,
                      details=f"Auto-unfollow after {s.unfollow_after_days}d")
             except Exception as e:
+                ev.job_action("unfollow", record.target_username, False, idx)
                 _log(db, account.id, "error",
                      target_username=record.target_username,
                      details=str(e), success=False)
                 logger.error("Unfollow error for %s: %s", record.target_username, e)
-                time.sleep(60)   # back off on errors
+                time.sleep(60)
 
         s.last_unfollow_run = datetime.datetime.utcnow()
         db.commit()
+        ev.job_complete("unfollow")
 
     finally:
         db.close()
@@ -231,6 +235,13 @@ def auto_follow_job():
             db.commit()
             return
 
+        queue_remaining = db.query(FollowQueue).filter(
+            FollowQueue.account_id == account.id
+        ).count()
+        ev.job_start("follow", min(s.follow_per_day - s.follows_today, queue_remaining))
+        ev.job_action("follow", item.target_username, True, s.follows_today + 1,
+                      delay_seconds=s.follow_delay_max)
+
         try:
             ig.follow_user(
                 item.target_user_id,
@@ -254,6 +265,8 @@ def auto_follow_job():
             s.last_follow_run = datetime.datetime.utcnow()
             db.commit()
 
+            ev.job_action("follow", item.target_username, True, s.follows_today, delay_seconds=0)
+            ev.job_complete("follow")
             _log(db, account.id, "follow",
                  target_username=item.target_username,
                  target_user_id=item.target_user_id,
