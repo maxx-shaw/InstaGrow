@@ -8,10 +8,27 @@ import os
 import random
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Optional
 
 logger = logging.getLogger("socialreach.browser")
+
+# Single dedicated thread for ALL Playwright operations.
+# Playwright's sync API ties browser objects to the thread that created them,
+# so every call must happen on the same thread. Login, follow, unfollow,
+# scrape — all go through this executor.
+_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="playwright")
+
+
+def submit_async(fn, *args, **kwargs):
+    """Schedule fn to run in the dedicated Playwright thread. Returns a Future."""
+    return _executor.submit(fn, *args, **kwargs)
+
+
+def run_blocking(fn, *args, **kwargs):
+    """Run fn in the Playwright thread and wait for the result."""
+    return _executor.submit(fn, *args, **kwargs).result()
 
 PROFILES_DIR = Path(os.environ.get("SOCIALREACH_PROFILES_DIR", "./browser_profiles"))
 HEADLESS = os.environ.get("SOCIALREACH_HEADLESS", "true").lower() != "false"

@@ -320,8 +320,10 @@
         <h2 class="text-lg font-semibold mb-1">Verification Required</h2>
         <p id="challenge-desc" class="text-sm text-slate-400 mb-4">A verification code was sent.</p>
         <div class="space-y-3">
-          <input id="challenge-code" type="text" placeholder="Enter 6-digit code" class="input text-center text-xl tracking-widest" maxlength="8" />
-          <button onclick="submitChallenge()" class="btn-primary w-full">Verify</button>
+          <input id="challenge-code" type="text" inputmode="numeric" autocomplete="one-time-code"
+            placeholder="6-digit code" class="input text-center text-xl tracking-widest"
+            maxlength="8" onkeydown="if(event.key==='Enter')submitChallenge()" />
+          <button onclick="submitChallenge()" class="btn-primary w-full" style="justify-content:center;">Verify</button>
         </div>
       </div>
 
@@ -1084,10 +1086,15 @@ function showChallengeForm(method) {
   const desc = {
     email: 'A verification code was sent to your email.',
     sms: 'A verification code was sent via SMS.',
-    totp: 'Open your authenticator app and enter the 6-digit code.',
+    totp: 'Enter the 6-digit code from your authenticator app, WhatsApp, SMS, or email.',
   };
   document.getElementById('challenge-desc').textContent = desc[method] || 'Enter the verification code.';
   hideStatusMsg();
+  // Auto-focus the input so user can type immediately
+  const codeInput = document.getElementById('challenge-code');
+  codeInput.value = '';
+  codeInput.disabled = false;
+  setTimeout(() => codeInput.focus(), 100);
 }
 
 async function submitChallenge() {

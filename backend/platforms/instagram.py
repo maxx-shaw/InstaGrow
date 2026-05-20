@@ -125,15 +125,33 @@ def logout():
 # Login — password
 # ---------------------------------------------------------------------------
 
+def _reset_in_progress_login():
+    """Unblock any login currently waiting on a challenge code, so a new attempt can start."""
+    global _totp_code, _challenge_code
+    status = login_state.get("status")
+    if status in ("logging_in", "totp_required", "challenge_required"):
+        logger.info("Aborting previous login (status=%s)", status)
+        _totp_code = None
+        _challenge_code = None
+        _totp_event.set()
+        _challenge_event.set()
+        time.sleep(0.5)  # give the old thread a moment to unwind
+
+
 def login_async(username: str, password: str, session_json: Optional[str] = None):
-    t = threading.Thread(target=_do_login, args=(username, password), daemon=True)
-    t.start()
+    _reset_in_progress_login()
+    # Run on the dedicated Playwright thread so all browser objects stay
+    # owned by the same thread.
+    future = be.submit_async(_do_login, username, password)
+
     def _watchdog():
-        t.join(timeout=90)
-        if t.is_alive() and login_state.get("status") == "logging_in":
-            login_state.update(status="error",
-                               error="Login timed out — browser may have hung. Restart the server and try again.")
-            logger.error("Login watchdog: thread still alive after 90 s")
+        try:
+            future.result(timeout=180)
+        except Exception as e:
+            if login_state.get("status") == "logging_in":
+                login_state.update(status="error",
+                                   error=f"Login failed: {e}")
+                logger.error("Login watchdog: %s", e)
     threading.Thread(target=_watchdog, daemon=True).start()
 
 
@@ -176,13 +194,28 @@ def _do_login(username: str, password: str):
             be.human_delay(1.5, 2.5)
             url = page.url
 
-            if "two_factor" in url or "two_factor" in page.content().lower():
-                login_state["status"] = "totp_required"
+            page_text = ""
+            try:
+                page_text = page.content().lower()
+            except Exception:
+                pass
+            two_factor_hit = (
+                "two_factor" in url
+                or "two_factor" in page_text
+                or "security code" in page_text
+                or "verification code" in page_text
+                or "6-digit code" in page_text
+            )
+
+            if two_factor_hit:
+                logger.info("Instagram requires 2FA — waiting for code")
+                login_state.update(status="totp_required", error=None)
                 _totp_event.clear()
                 got = _totp_event.wait(timeout=300)
                 if not got or not _totp_code:
-                    login_state.update(status="error", error="Authenticator code timed out — please try again")
+                    login_state.update(status="error", error="2FA code timed out or cancelled — please try again")
                     return
+                logger.info("Got 2FA code, submitting")
                 _submit_totp(page, username)
 
             elif "challenge" in url:
@@ -211,15 +244,68 @@ def _do_login(username: str, password: str):
 
 def _submit_totp(page, username: str):
     try:
-        sel = 'input[name="verificationCode"], input[aria-label*="ode"]'
-        page.locator(sel).first.fill(_totp_code)
+        # Find the verification code input — bloks UI uses different attrs
+        code_selectors = [
+            'input[name="verificationCode"]',
+            'input[aria-label*="ode"]',
+            'input[autocomplete="one-time-code"]',
+            'input[inputmode="numeric"]',
+            'input[type="tel"]',
+        ]
+        filled = False
+        for sel in code_selectors:
+            try:
+                el = page.locator(sel).first
+                if el.is_visible(timeout=1500):
+                    el.fill(_totp_code)
+                    filled = True
+                    logger.info("Filled 2FA code into: %s", sel)
+                    break
+            except Exception:
+                continue
+        if not filled:
+            raise Exception("Could not find 2FA input field")
+
         be.human_delay(0.4, 0.8)
-        page.locator('button:has-text("Confirm")').first.click()
-        page.wait_for_url(lambda u: "two_factor" not in u, timeout=10000)
+
+        # Click confirm — try multiple selectors then fall back to Enter
+        confirm_selectors = [
+            'button:has-text("Confirm")',
+            'div[role="button"]:has-text("Confirm")',
+            'button:has-text("Continue")',
+            'div[role="button"]:has-text("Continue")',
+            'button[type="submit"]',
+        ]
+        clicked = False
+        for sel in confirm_selectors:
+            try:
+                el = page.locator(sel).first
+                if el.is_visible(timeout=1500):
+                    el.click()
+                    clicked = True
+                    logger.info("Submitted 2FA via: %s", sel)
+                    break
+            except Exception:
+                continue
+        if not clicked:
+            logger.info("No confirm button matched — pressing Enter")
+            page.keyboard.press("Enter")
+
+        try:
+            page.wait_for_url(lambda u: "two_factor" not in u, timeout=15000)
+        except Exception:
+            pass
         be.human_delay(1, 2)
+
+        if "two_factor" in page.url:
+            login_state.update(status="error",
+                               error="2FA code rejected by Instagram — please try again")
+            return
+
         _finish_login(page, username)
     except Exception as e:
         login_state.update(status="error", error=f"2FA failed: {e}")
+        logger.error("2FA submission failed: %s", e)
 
 
 def _submit_challenge(page, username: str):
@@ -239,8 +325,8 @@ def _submit_challenge(page, username: str):
 # ---------------------------------------------------------------------------
 
 def login_by_sessionid_async(username: str, session_id: str):
-    t = threading.Thread(target=_do_login_sessionid, args=(username, session_id), daemon=True)
-    t.start()
+    _reset_in_progress_login()
+    be.submit_async(_do_login_sessionid, username, session_id)
 
 
 def _do_login_sessionid(username: str, session_id: str):
@@ -316,6 +402,10 @@ def _extract_user_id(page, username: str) -> Optional[str]:
 # ---------------------------------------------------------------------------
 
 def follow_user_by_username(username: str, delay_min: int = 45, delay_max: int = 180) -> bool:
+    return be.run_blocking(_follow_user_by_username, username, delay_min, delay_max)
+
+
+def _follow_user_by_username(username: str, delay_min: int, delay_max: int) -> bool:
     with _page_lock:
         page = be.get_page(_profile_key)
         page.goto(f"{IG}/{username}/", wait_until="domcontentloaded")
@@ -345,6 +435,10 @@ def follow_user_by_username(username: str, delay_min: int = 45, delay_max: int =
 
 
 def unfollow_user_by_username(username: str, delay_min: int = 30, delay_max: int = 90) -> bool:
+    return be.run_blocking(_unfollow_user_by_username, username, delay_min, delay_max)
+
+
+def _unfollow_user_by_username(username: str, delay_min: int, delay_max: int) -> bool:
     with _page_lock:
         page = be.get_page(_profile_key)
         page.goto(f"{IG}/{username}/", wait_until="domcontentloaded")
@@ -381,6 +475,10 @@ class _UserInfo:
 
 
 def _scrape_list(list_type: str) -> dict:
+    return be.run_blocking(_scrape_list_impl, list_type)
+
+
+def _scrape_list_impl(list_type: str) -> dict:
     """Scrape following or followers by intercepting XHR calls."""
     username = login_state.get("username", "")
     if not username:
@@ -460,6 +558,10 @@ def get_followers(user_id: str, amount: int = 0) -> dict:
 
 
 def get_user_info_by_username(username: str) -> _UserInfo:
+    return be.run_blocking(_get_user_info_by_username_impl, username)
+
+
+def _get_user_info_by_username_impl(username: str) -> "_UserInfo":
     with _page_lock:
         page = be.get_page(_profile_key)
         holder: dict = {}
