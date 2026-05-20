@@ -974,10 +974,28 @@ let pendingChallengeType = 'challenge';  // 'challenge' | 'totp'
 // ==================== INIT ====================
 async function init() {
   const status = await api('GET', '/api/auth/status');
+
   if (status.status === 'logged_in') {
     showApp(status.username);
-  } else {
-    showLogin();
+    return;
+  }
+
+  // Always render the login screen first so DOM nodes exist
+  showLogin();
+
+  // Resume whatever in-progress state the backend is in (e.g. user refreshed
+  // during 2FA — without this the code prompt would never reappear).
+  if (status.status === 'totp_required') {
+    pendingChallengeType = 'totp';
+    showChallengeForm('totp');
+    pollLoginStatus();
+  } else if (status.status === 'challenge_required') {
+    pendingChallengeType = 'challenge';
+    showChallengeForm(status.challenge_method);
+    pollLoginStatus();
+  } else if (status.status === 'logging_in') {
+    showStatusMsg('Connecting account…', 'info');
+    pollLoginStatus();
   }
 }
 
