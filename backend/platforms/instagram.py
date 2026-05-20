@@ -39,21 +39,52 @@ def _dismiss_overlays(page):
     try:
         dismissed = page.evaluate("""() => {
             const keywords = [
-                'Allow all', 'Allow essential', 'Decline optional',
-                'Accept all', 'Only allow essential', 'Reject all'
+                'allow all', 'allow essential', 'decline optional',
+                'accept all', 'accept', 'only allow essential',
+                'reject all', 'decline'
             ];
-            const buttons = Array.from(document.querySelectorAll('button'));
-            for (const kw of keywords) {
-                const btn = buttons.find(b => b.innerText && b.innerText.trim().startsWith(kw));
-                if (btn) { btn.click(); return btn.innerText.trim(); }
+            // Check all clickable elements, not just <button>
+            const clickable = Array.from(document.querySelectorAll(
+                'button, [role="button"], [tabindex="0"]'
+            ));
+            for (const el of clickable) {
+                const txt = (el.innerText || el.textContent || '').trim().toLowerCase();
+                if (!txt || txt.length > 60) continue;
+                if (keywords.some(kw => txt.startsWith(kw))) {
+                    el.click();
+                    return txt.slice(0, 50);
+                }
             }
             return null;
         }""")
         if dismissed:
-            logger.info("Dismissed cookie overlay via JS: %s", dismissed)
+            logger.info("Dismissed overlay via JS: %s", dismissed)
             be.human_delay(0.8, 1.2)
+        else:
+            logger.info("No cookie overlay detected")
     except Exception as e:
         logger.debug("Overlay dismiss (non-fatal): %s", e)
+
+
+def _submit_login_form(page):
+    """Submit the login form — tries multiple selectors then falls back to Enter."""
+    selectors = [
+        'button[type="submit"]',
+        'button:has-text("Log in")',
+        'div[role="button"]:has-text("Log in")',
+        '[aria-label="Log in"]',
+    ]
+    for sel in selectors:
+        try:
+            el = page.locator(sel).first
+            if el.is_visible(timeout=1500):
+                el.click()
+                logger.info("Clicked login submit via: %s", sel)
+                return
+        except Exception:
+            continue
+    logger.info("No submit button matched — pressing Enter")
+    page.keyboard.press("Enter")
 
 
 def is_logged_in() -> bool:
@@ -129,11 +160,13 @@ def _do_login(username: str, password: str):
             # Dismiss cookie / consent overlay before touching any inputs
             _dismiss_overlays(page)
 
+            logger.info("Typing credentials")
             be.human_type(page, 'input[name="username"]', username)
             be.human_delay(0.4, 0.9)
             be.human_type(page, 'input[name="password"]', password)
             be.human_delay(0.6, 1.2)
-            be.human_click(page, 'button[type="submit"]')
+            logger.info("Submitting login form")
+            _submit_login_form(page)
 
             try:
                 page.wait_for_url(lambda u: "accounts/login" not in u, timeout=15000)

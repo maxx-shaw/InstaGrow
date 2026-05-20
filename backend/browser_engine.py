@@ -117,22 +117,37 @@ def inject_cookie(profile_key: str, name: str, value: str, domain: str):
 
 def human_type(page, selector: str, text: str):
     el = page.locator(selector).first
-    el.scroll_into_view_if_needed()
+    el.wait_for(state="attached", timeout=10000)
     try:
-        el.click(timeout=4000)
+        el.scroll_into_view_if_needed(timeout=2000)
+    except Exception:
+        pass
+    try:
+        el.click(timeout=3000)
     except Exception:
         el.focus()  # overlay may be blocking click; focus still works
-    el.fill("")
+    try:
+        el.fill("")
+    except Exception:
+        pass
     for char in text:
         page.keyboard.type(char)
         time.sleep(random.uniform(0.05, 0.17))
 
 
-def human_click(page, selector: str):
+def human_click(page, selector: str, timeout: int = 5000):
     el = page.locator(selector).first
-    el.scroll_into_view_if_needed()
+    el.wait_for(state="visible", timeout=timeout)
+    try:
+        el.scroll_into_view_if_needed(timeout=2000)
+    except Exception:
+        pass
     time.sleep(random.uniform(0.15, 0.45))
-    el.click()
+    try:
+        el.click(timeout=timeout)
+    except Exception:
+        # Fallback: JS click bypasses overlay interception
+        el.evaluate("e => e.click()")
 
 
 def human_delay(min_s: float = 0.8, max_s: float = 2.5):
