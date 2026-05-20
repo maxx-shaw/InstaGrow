@@ -34,7 +34,28 @@ _challenge_code: Optional[str] = None
 _challenge_event = threading.Event()
 
 
-def is_logged_in() -> bool:
+def _dismiss_overlays(page):
+    """Dismiss cookie/consent dialogs before interacting with the page."""
+    selectors = [
+        'button:has-text("Allow all cookies")',
+        'button:has-text("Allow essential and optional cookies")',
+        'button:has-text("Allow essential cookies only")',
+        'button:has-text("Allow essential")',
+        'button:has-text("Decline optional cookies")',
+        'button:has-text("Only allow essential cookies")',
+        'button:has-text("Accept all")',
+        'button:has-text("Accept All")',
+    ]
+    for sel in selectors:
+        try:
+            btn = page.locator(sel).first
+            if btn.is_visible(timeout=1500):
+                btn.click()
+                be.human_delay(0.8, 1.5)
+                logger.info("Dismissed overlay: %s", sel)
+                return
+        except Exception:
+            continue
     return login_state["status"] == "logged_in"
 
 
@@ -104,12 +125,8 @@ def _do_login(username: str, password: str):
                 _finish_login(page, username)
                 return
 
-            # Dismiss cookie notice
-            try:
-                page.locator('button:has-text("Allow essential")').click(timeout=2500)
-                be.human_delay(0.5, 1)
-            except Exception:
-                pass
+            # Dismiss cookie / consent overlay before touching any inputs
+            _dismiss_overlays(page)
 
             be.human_type(page, 'input[name="username"]', username)
             be.human_delay(0.4, 0.9)

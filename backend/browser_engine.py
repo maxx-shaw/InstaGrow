@@ -118,7 +118,10 @@ def inject_cookie(profile_key: str, name: str, value: str, domain: str):
 def human_type(page, selector: str, text: str):
     el = page.locator(selector).first
     el.scroll_into_view_if_needed()
-    el.click()
+    try:
+        el.click(timeout=4000)
+    except Exception:
+        el.focus()  # overlay may be blocking click; focus still works
     el.fill("")
     for char in text:
         page.keyboard.type(char)
