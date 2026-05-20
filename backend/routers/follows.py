@@ -102,7 +102,11 @@ def sync_following(db: Session = Depends(get_db)):
     except Exception as e:
         err = str(e)
         if "wait" in err.lower() or "few minutes" in err.lower() or "429" in err or "throttl" in err.lower():
-            raise HTTPException(429, "Instagram is rate-limiting this account. Wait a few minutes then try again.")
+            from fastapi.responses import JSONResponse
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Instagram is rate-limiting this account. Please wait before trying again.", "retry_after": 300},
+            )
         raise HTTPException(502, f"Instagram error: {err}")
     follower_ids = set(str(uid) for uid in follower_map.keys())
 

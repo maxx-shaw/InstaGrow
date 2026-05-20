@@ -387,6 +387,10 @@
           Sync from Instagram
         </button>
       </div>
+      <div id="rate-limit-banner" style="display:none;" class="mb-4 p-3 rounded-lg border border-yellow-700 bg-yellow-950 text-yellow-300 text-sm flex items-center gap-3">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        <span>Instagram rate limit hit — sync available again in <strong id="rate-limit-countdown"></strong></span>
+      </div>
 
       <!-- Live Activity Card -->
       <div class="card mb-6" id="live-card">
@@ -1076,7 +1080,37 @@ async function loadDashboard() {
   }
 }
 
+let _rateLimitTimer = null;
+
+function showRateLimit(seconds) {
+  const banner = document.getElementById('rate-limit-banner');
+  const btn = document.getElementById('sync-btn');
+  const countdown = document.getElementById('rate-limit-countdown');
+  let remaining = seconds;
+
+  banner.style.display = 'flex';
+  btn.disabled = true;
+
+  if (_rateLimitTimer) clearInterval(_rateLimitTimer);
+
+  function tick() {
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    countdown.textContent = m > 0 ? `${m}m ${s}s` : `${s}s`;
+    if (remaining <= 0) {
+      clearInterval(_rateLimitTimer);
+      _rateLimitTimer = null;
+      banner.style.display = 'none';
+      btn.disabled = false;
+    }
+    remaining--;
+  }
+  tick();
+  _rateLimitTimer = setInterval(tick, 1000);
+}
+
 async function syncFollowing() {
+  if (_rateLimitTimer) return;
   const btn = document.getElementById('sync-btn');
   btn.disabled = true;
   btn.innerHTML = '<span class="loading-spinner"></span><span>Syncing...</span>';
@@ -1085,9 +1119,17 @@ async function syncFollowing() {
     toast(`Sync complete: ${result.total_following} following`, 'success');
     loadDashboard();
   } catch(e) {
-    toast('Sync failed: ' + e.message, 'error');
+    if (e.status === 429) {
+      showRateLimit(e.retry_after || 300);
+      toast('Instagram rate limit hit — try again in a few minutes', 'error');
+    } else {
+      toast('Sync failed: ' + e.message, 'error');
+      btn.disabled = false;
+    }
   } finally {
-    btn.disabled = false;
+    if (!_rateLimitTimer) {
+      btn.disabled = false;
+    }
     btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>Sync from Instagram`;
   }
 }
@@ -1455,7 +1497,10 @@ async function api(method, path, body) {
   const res = await fetch(API + path, opts);
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || 'Request failed');
+    const e = new Error(err.detail || 'Request failed');
+    e.status = res.status;
+    e.retry_after = err.retry_after || null;
+    throw e;
   }
   return res.json();
 }
