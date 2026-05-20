@@ -54,6 +54,9 @@ def _dismiss_overlays(page):
             be.human_delay(0.8, 1.2)
     except Exception as e:
         logger.debug("Overlay dismiss (non-fatal): %s", e)
+
+
+def is_logged_in() -> bool:
     return login_state["status"] == "logged_in"
 
 
