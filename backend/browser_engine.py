@@ -27,7 +27,13 @@ def _ensure_browser():
     global _pw, _browser
     if _browser is not None:
         return
-    from playwright.sync_api import sync_playwright
+    logger.info("Starting Playwright / launching Chromium (headless=%s)…", HEADLESS)
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        raise RuntimeError(
+            "Playwright is not installed. Run: pip install playwright && playwright install chromium"
+        )
     _pw = sync_playwright().start()
     _browser = _pw.chromium.launch(
         headless=HEADLESS,
