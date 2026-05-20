@@ -75,16 +75,27 @@ def logout():
 def login_async(username: str, password: str, session_json: Optional[str] = None):
     t = threading.Thread(target=_do_login, args=(username, password), daemon=True)
     t.start()
+    def _watchdog():
+        t.join(timeout=90)
+        if t.is_alive() and login_state.get("status") == "logging_in":
+            login_state.update(status="error",
+                               error="Login timed out — browser may have hung. Restart the server and try again.")
+            logger.error("Login watchdog: thread still alive after 90 s")
+    threading.Thread(target=_watchdog, daemon=True).start()
 
 
 def _do_login(username: str, password: str):
     global _profile_key
     _profile_key = f"instagram_{username}"
     login_state.update(status="logging_in", error=None, username=username)
+    logger.info("Starting Playwright login for @%s", username)
 
     with _page_lock:
         try:
+            logger.info("Launching browser for @%s", username)
             page = be.get_page(_profile_key)
+            page.set_default_timeout(30000)
+            logger.info("Navigating to Instagram login")
             page.goto(f"{IG}/accounts/login/", wait_until="domcontentloaded")
             be.human_delay(1.5, 2.5)
 

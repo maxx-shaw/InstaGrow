@@ -16,7 +16,7 @@ logger = logging.getLogger("socialreach.browser")
 PROFILES_DIR = Path(os.environ.get("SOCIALREACH_PROFILES_DIR", "./browser_profiles"))
 HEADLESS = os.environ.get("SOCIALREACH_HEADLESS", "true").lower() != "false"
 
-_lock = threading.Lock()
+_lock = threading.RLock()  # reentrant: get_page() calls get_context() while holding the lock
 _pw = None
 _browser = None
 _contexts: dict = {}   # profile_key -> BrowserContext
