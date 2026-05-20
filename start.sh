@@ -19,8 +19,12 @@ source "$VENV_DIR/bin/activate"
 echo "==> Installing dependencies..."
 pip install -q -r "$BACKEND_DIR/requirements.txt"
 
+# Install Playwright browser (no-op if already installed)
+echo "==> Installing Chromium for browser automation..."
+playwright install chromium
+
 echo ""
-echo "==> Starting InstaGrow at http://localhost:8000"
+echo "==> Starting InstaGrow v2 at http://localhost:8000"
 echo ""
 
 cd "$BACKEND_DIR"

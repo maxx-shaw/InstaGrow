@@ -30,8 +30,12 @@ echo ==^> Installing dependencies...
 python -m pip install --upgrade pip >nul
 pip install -q -r "%BACKEND_DIR%\requirements.txt"
 
+REM Install Playwright browser (only downloads if not already present)
+echo ==^> Installing Chromium browser for automation...
+playwright install chromium
+
 echo.
-echo ==^> Starting InstaGrow at http://localhost:8000
+echo ==^> Starting InstaGrow v2 at http://localhost:8000
 echo ==^> Press Ctrl+C to stop
 echo.
 
