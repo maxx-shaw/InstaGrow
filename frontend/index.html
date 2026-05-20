@@ -112,6 +112,76 @@
       border-top-color: white; animation: spin 0.7s linear infinite;
     }
 
+    /* Live card job spinner */
+    .job-spinner {
+      width: 36px; height: 36px; flex-shrink: 0;
+      border: 3px solid rgba(168,85,247,0.25); border-radius: 50%;
+      border-top-color: #a855f7; animation: spin 0.75s linear infinite;
+    }
+
+    /* Live card running state */
+    #live-card.running {
+      border-color: rgba(168,85,247,0.4);
+      box-shadow: 0 0 0 1px rgba(168,85,247,0.15), 0 4px 24px rgba(168,85,247,0.08);
+    }
+
+    /* Current action block */
+    .live-now-block {
+      display: flex; align-items: center; gap: 0.875rem;
+      padding: 0.875rem 1rem; border-radius: 0.625rem;
+      background: rgba(88,28,135,0.18); border: 1px solid rgba(168,85,247,0.3);
+      margin-bottom: 1rem;
+    }
+
+    /* Progress bar */
+    .live-progress-track {
+      background: #1e293b; border-radius: 9999px; height: 10px; overflow: hidden; position: relative;
+    }
+    .live-progress-fill {
+      height: 100%; border-radius: 9999px;
+      background: linear-gradient(to right, #9333ea, #db2777);
+      transition: width 0.5s ease;
+      position: relative; overflow: hidden;
+    }
+    .live-progress-fill::after {
+      content: ''; position: absolute; top: 0; left: -100%;
+      width: 60%; height: 100%;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
+      animation: shimmer 1.6s infinite;
+    }
+    @keyframes shimmer { to { left: 200%; } }
+
+    /* Countdown timer */
+    .live-timer {
+      font-family: ui-monospace, monospace; font-size: 1.75rem;
+      font-weight: 700; color: #a855f7; line-height: 1;
+      min-width: 4ch; text-align: right;
+    }
+
+    /* Action feed row */
+    .feed-row {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.78rem; padding: 0.25rem 0;
+      animation: fadeSlideIn 0.3s ease;
+    }
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Counter cells */
+    .live-counter {
+      flex: 1; text-align: center; padding: 0.625rem 0.25rem;
+      background: #0f172a; border-radius: 0.5rem; border: 1px solid #1e293b;
+    }
+    .live-counter-val {
+      display: block; font-size: 1.5rem; font-weight: 700; line-height: 1.1;
+    }
+    .live-counter-label {
+      display: block; font-size: 0.65rem; color: #64748b;
+      text-transform: uppercase; letter-spacing: 0.04em; margin-top: 0.2rem;
+    }
+
     /* ---- Mobile ---- */
     .mobile-header {
       display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 40;
@@ -394,50 +464,66 @@
 
       <!-- Live Activity Card -->
       <div class="card mb-6" id="live-card">
-        <div class="flex items-center justify-between mb-3">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-2">
-            <span id="live-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#475569;flex-shrink:0;"></span>
+            <span id="live-dot" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#475569;flex-shrink:0;"></span>
             <h3 class="text-sm font-semibold text-slate-300">Live Activity</h3>
           </div>
           <span id="live-job-label" class="badge-gray" style="font-size:0.7rem;">Idle</span>
         </div>
 
-        <!-- Progress bar -->
-        <div id="live-progress-wrap" style="display:none;margin-bottom:0.875rem;">
-          <div class="flex justify-between text-xs text-slate-400 mb-1">
-            <span id="live-progress-label">Working...</span>
-            <span id="live-progress-count">0 / 0</span>
+        <!-- NOW PROCESSING block (shown while running) -->
+        <div id="live-now-wrap" style="display:none;">
+          <div class="live-now-block">
+            <div class="job-spinner"></div>
+            <div style="min-width:0;flex:1;">
+              <div class="text-xs text-slate-400 mb-0.5">Now processing</div>
+              <div class="text-base font-bold text-white truncate">@<span id="live-current-username">…</span></div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div class="text-xs text-slate-500 mb-0.5">Next action in</div>
+              <div class="live-timer" id="live-next-timer">—</div>
+            </div>
           </div>
-          <div style="background:#1e293b;border-radius:9999px;height:8px;overflow:hidden;">
-            <div id="live-progress-bar" style="height:100%;width:0%;border-radius:9999px;background:linear-gradient(to right,#9333ea,#db2777);transition:width 0.4s ease;"></div>
+
+          <!-- Progress bar -->
+          <div id="live-progress-wrap" style="margin-bottom:1rem;">
+            <div class="flex justify-between text-xs mb-2" style="color:#94a3b8;">
+              <span id="live-progress-label">Processing…</span>
+              <span><span id="live-progress-count">0 / 0</span> &nbsp;<span id="live-progress-pct" style="color:#a855f7;font-weight:600;">0%</span></span>
+            </div>
+            <div class="live-progress-track">
+              <div id="live-progress-bar" class="live-progress-fill" style="width:0%"></div>
+            </div>
           </div>
         </div>
 
-        <!-- Last action + today counters -->
-        <div class="flex flex-wrap gap-4">
-          <div style="flex:1;min-width:180px;">
-            <p class="text-xs text-slate-500 mb-1">Last action</p>
-            <p id="live-last-action" class="text-sm text-slate-300">—</p>
-            <p id="live-last-time" class="text-xs text-slate-600 mt-0.5">—</p>
+        <!-- Idle placeholder -->
+        <div id="live-idle-msg" class="text-sm text-slate-600 mb-4">No job running — automation will kick in on schedule.</div>
+
+        <!-- Counters -->
+        <div class="flex gap-2 mb-4">
+          <div class="live-counter">
+            <span id="live-follows-today" class="live-counter-val text-green-400">0</span>
+            <span class="live-counter-label">Follows today</span>
           </div>
-          <div style="display:flex;gap:1.5rem;">
-            <div class="text-center">
-              <p class="text-xs text-slate-500">Follows today</p>
-              <p id="live-follows-today" class="text-lg font-bold text-green-400">0</p>
-            </div>
-            <div class="text-center">
-              <p class="text-xs text-slate-500">Unfollows today</p>
-              <p id="live-unfollows-today" class="text-lg font-bold text-red-400">0</p>
-            </div>
-            <div class="text-center">
-              <p class="text-xs text-slate-500">Errors</p>
-              <p id="live-errors" class="text-lg font-bold text-yellow-400">0</p>
-            </div>
+          <div class="live-counter">
+            <span id="live-unfollows-today" class="live-counter-val text-red-400">0</span>
+            <span class="live-counter-label">Unfollows today</span>
+          </div>
+          <div class="live-counter">
+            <span id="live-errors" class="live-counter-val text-yellow-400">0</span>
+            <span class="live-counter-label">Errors</span>
           </div>
         </div>
 
         <!-- Action feed -->
-        <div id="live-feed" style="margin-top:0.875rem;border-top:1px solid #1e293b;padding-top:0.75rem;display:flex;flex-direction:column;gap:0.375rem;max-height:130px;overflow-y:auto;"></div>
+        <div style="border-top:1px solid #1e293b;padding-top:0.75rem;">
+          <div class="text-xs text-slate-500 mb-2">Recent actions</div>
+          <div id="live-feed" style="display:flex;flex-direction:column;gap:0.25rem;max-height:160px;overflow-y:auto;"></div>
+          <div id="live-feed-empty" class="text-xs text-slate-600">Actions will appear here as they happen.</div>
+        </div>
       </div>
 
       <!-- Stats grid -->
@@ -614,7 +700,7 @@
           </div>
 
           <div class="pt-3 border-t border-slate-800">
-            <button onclick="triggerUnfollow()" class="btn-danger w-full">Run Unfollow Job Now</button>
+            <button onclick="triggerUnfollow()" id="trigger-unfollow-btn" class="btn-danger w-full">Run Unfollow Job Now</button>
             <p class="text-xs text-slate-500 mt-2 text-center">Immediately processes the unfollow queue up to today's limit</p>
           </div>
 
@@ -680,7 +766,7 @@
           </div>
 
           <div class="pt-3 border-t border-slate-800 space-y-2">
-            <button onclick="triggerScan()" class="btn-primary w-full">Scan for New Accounts</button>
+            <button onclick="triggerScan()" id="trigger-scan-btn" class="btn-primary w-full">Scan for New Accounts</button>
             <p class="text-xs text-slate-500 text-center">Finds followers-of-following with enough mutuals and adds them to the queue</p>
           </div>
 
@@ -1569,19 +1655,46 @@ function stopLiveStream() {
   if (_liveSource) { _liveSource.close(); _liveSource = null; }
 }
 
+// Local countdown timer for the delay between actions
+let _timerInterval = null;
+let _timerRemaining = 0;
+let _lastNextRunKey = null;
+
+function _startDelayTimer(seconds) {
+  if (_timerInterval) clearInterval(_timerInterval);
+  _timerRemaining = seconds;
+  const el = document.getElementById('live-next-timer');
+  function tick() {
+    if (_timerRemaining <= 0) {
+      clearInterval(_timerInterval);
+      _timerInterval = null;
+      if (el) el.textContent = '…';
+      return;
+    }
+    const m = Math.floor(_timerRemaining / 60);
+    const s = _timerRemaining % 60;
+    if (el) el.textContent = m > 0 ? `${m}:${String(s).padStart(2,'0')}` : `${s}s`;
+    _timerRemaining--;
+  }
+  tick();
+  _timerInterval = setInterval(tick, 1000);
+}
+
 function updateLiveCard(s) {
   const running = s.status === 'running';
+
+  // Card border glow
+  document.getElementById('live-card').classList.toggle('running', running);
 
   // Status dot
   const dot = document.getElementById('live-dot');
   if (running) {
     dot.style.background = '#a855f7';
-    dot.style.boxShadow = '0 0 0 0 rgba(168,85,247,0.6)';
     dot.style.animation = 'pulse-dot 1.2s infinite';
   } else {
     dot.style.background = '#475569';
-    dot.style.boxShadow = 'none';
     dot.style.animation = 'none';
+    dot.style.boxShadow = 'none';
   }
 
   // Job label
@@ -1595,17 +1708,52 @@ function updateLiveCard(s) {
     label.className = 'badge-gray';
   }
 
-  // Progress bar
-  const wrap = document.getElementById('live-progress-wrap');
-  if (running && s.total > 0) {
-    wrap.style.display = 'block';
-    const pct = Math.min(100, Math.round((s.current / s.total) * 100));
-    document.getElementById('live-progress-bar').style.width = pct + '%';
-    document.getElementById('live-progress-count').textContent = `${s.current} / ${s.total}`;
-    const actionName = s.job_type === 'unfollow' ? 'Unfollowing' : s.job_type === 'follow' ? 'Following' : 'Processing';
-    document.getElementById('live-progress-label').textContent = `${actionName}${s.next_run_seconds ? ` · waiting ${s.next_run_seconds}s` : ''}...`;
+  // Now-processing block
+  const nowWrap = document.getElementById('live-now-wrap');
+  const idleMsg = document.getElementById('live-idle-msg');
+  nowWrap.style.display = running ? 'block' : 'none';
+  idleMsg.style.display = running ? 'none' : 'block';
+
+  if (running) {
+    // Current username
+    if (s.last_username) {
+      document.getElementById('live-current-username').textContent = s.last_username;
+    }
+
+    // Delay countdown — only restart when next_run_seconds is a fresh value
+    const timerKey = `${s.last_action_time}:${s.next_run_seconds}`;
+    if (s.next_run_seconds && timerKey !== _lastNextRunKey) {
+      _lastNextRunKey = timerKey;
+      _startDelayTimer(s.next_run_seconds);
+    } else if (!s.next_run_seconds) {
+      if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
+      const el = document.getElementById('live-next-timer');
+      if (el) el.textContent = '…';
+    }
+
+    // Progress bar
+    if (s.total > 0) {
+      const pct = Math.min(100, Math.round((s.current / s.total) * 100));
+      document.getElementById('live-progress-bar').style.width = pct + '%';
+      document.getElementById('live-progress-count').textContent = `${s.current} / ${s.total}`;
+      document.getElementById('live-progress-pct').textContent = pct + '%';
+      const verb = s.job_type === 'unfollow' ? 'Unfollowing' : s.job_type === 'follow' ? 'Following' : 'Processing';
+      document.getElementById('live-progress-label').textContent = verb + '…';
+    }
+
+    // Lock trigger buttons while job runs
+    ['trigger-unfollow-btn','trigger-scan-btn'].forEach(id => {
+      const b = document.getElementById(id);
+      if (b) b.disabled = true;
+    });
   } else {
-    wrap.style.display = 'none';
+    // Unlock on idle
+    ['trigger-unfollow-btn','trigger-scan-btn'].forEach(id => {
+      const b = document.getElementById(id);
+      if (b) b.disabled = false;
+    });
+    if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
+    _lastNextRunKey = null;
   }
 
   // Counters
@@ -1613,29 +1761,27 @@ function updateLiveCard(s) {
   document.getElementById('live-unfollows-today').textContent = s.unfollows_today  || 0;
   document.getElementById('live-errors').textContent          = s.errors_session   || 0;
 
-  // Last action
+  // Action feed — dedupe by action+username+time
   if (s.last_action && s.last_username) {
-    const icon = s.last_action_success ? '✓' : '✗';
-    const color = s.last_action_success ? '#4ade80' : '#f87171';
-    const verb = s.last_action === 'follow' ? 'Followed' : s.last_action === 'unfollow' ? 'Unfollowed' : s.last_action;
-    document.getElementById('live-last-action').innerHTML =
-      `<span style="color:${color}">${icon}</span> ${verb} <span style="color:#c084fc">@${s.last_username}</span>`;
-    document.getElementById('live-last-time').textContent =
-      s.last_action_time ? timeAgo(s.last_action_time) : '';
-
-    // Feed — dedupe by username+action
     const key = `${s.last_action}:${s.last_username}:${s.last_action_time}`;
     if (!_feedItems.includes(key)) {
       _feedItems.unshift(key);
-      if (_feedItems.length > 30) _feedItems.pop();
+      if (_feedItems.length > 40) _feedItems.pop();
+
+      document.getElementById('live-feed-empty').style.display = 'none';
       const feed = document.getElementById('live-feed');
+      const success = s.last_action_success;
+      const verb = s.last_action === 'follow' ? 'Followed' : s.last_action === 'unfollow' ? 'Unfollowed' : s.last_action;
+      const icon = success
+        ? '<svg style="width:14px;height:14px;flex-shrink:0;color:#4ade80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>'
+        : '<svg style="width:14px;height:14px;flex-shrink:0;color:#f87171" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>';
       const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;font-size:0.78rem;';
-      row.innerHTML = `<span style="color:${color};flex-shrink:0">${icon}</span>
-        <span style="color:#cbd5e1">${verb} <strong style="color:#c084fc">@${s.last_username}</strong></span>
-        <span style="margin-left:auto;color:#475569;flex-shrink:0">${timeAgo(s.last_action_time)}</span>`;
+      row.className = 'feed-row';
+      row.innerHTML = `${icon}
+        <span style="color:${success?'#cbd5e1':'#94a3b8'}">${verb} <strong style="color:#c084fc">@${s.last_username}</strong></span>
+        <span style="margin-left:auto;color:#475569;flex-shrink:0;font-size:0.72rem">${timeAgo(s.last_action_time)}</span>`;
       feed.prepend(row);
-      if (feed.children.length > 20) feed.lastChild.remove();
+      if (feed.children.length > 25) feed.lastChild.remove();
     }
   }
 }
