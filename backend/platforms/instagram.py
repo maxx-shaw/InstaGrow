@@ -193,22 +193,42 @@ def _do_login(username: str, password: str):
 
             be.human_delay(1.5, 2.5)
             url = page.url
+            logger.info("Post-submit URL: %s", url)
 
             page_text = ""
             try:
                 page_text = page.content().lower()
             except Exception:
                 pass
-            two_factor_hit = (
-                "two_factor" in url
-                or "two_factor" in page_text
-                or "security code" in page_text
-                or "verification code" in page_text
-                or "6-digit code" in page_text
-            )
+
+            # Most reliable 2FA detection: is there a code/OTP input on the page?
+            two_factor_input_found = False
+            for sel in [
+                'input[name="verificationCode"]',
+                'input[autocomplete="one-time-code"]',
+                'input[inputmode="numeric"]',
+                'input[name="security_code"]',
+                'input[aria-label*="ode" i]',
+            ]:
+                try:
+                    if page.locator(sel).first.is_visible(timeout=600):
+                        two_factor_input_found = True
+                        logger.info("2FA input detected via selector: %s", sel)
+                        break
+                except Exception:
+                    continue
+
+            two_factor_text_hit = any(kw in page_text for kw in [
+                "two_factor", "two-factor", "security code", "verification code",
+                "6-digit code", "enter the code", "we sent a", "check your",
+                "login code", "confirmation code",
+            ])
+
+            two_factor_hit = two_factor_input_found or "two_factor" in url or two_factor_text_hit
 
             if two_factor_hit:
-                logger.info("Instagram requires 2FA — waiting for code")
+                logger.info("Instagram requires 2FA — waiting for code (input_found=%s, url_match=%s, text_match=%s)",
+                            two_factor_input_found, "two_factor" in url, two_factor_text_hit)
                 login_state.update(status="totp_required", error=None)
                 _totp_event.clear()
                 got = _totp_event.wait(timeout=300)
@@ -218,7 +238,8 @@ def _do_login(username: str, password: str):
                 logger.info("Got 2FA code, submitting")
                 _submit_totp(page, username)
 
-            elif "challenge" in url:
+            elif "challenge" in url or "checkpoint" in url:
+                logger.info("Instagram challenge required (URL: %s)", url)
                 login_state.update(status="challenge_required", challenge_method="email")
                 _challenge_event.clear()
                 got = _challenge_event.wait(timeout=300)
@@ -228,10 +249,14 @@ def _do_login(username: str, password: str):
                 _submit_challenge(page, username)
 
             elif "accounts/login" in url:
+                # Still on login page — could be wrong credentials OR a banner we missed
                 try:
                     msg = page.locator('[data-testid="login-error-message"]').inner_text(timeout=2000)
                 except Exception:
-                    msg = "Login failed — check your credentials"
+                    # Log a slice of the page to help diagnose
+                    logger.warning("Login fall-through. URL=%s. Page text head: %s",
+                                   url, page_text[:500].replace("\n", " "))
+                    msg = "Login failed — check your credentials, or Instagram showed an unexpected page"
                 login_state.update(status="error", error=msg)
 
             else:
