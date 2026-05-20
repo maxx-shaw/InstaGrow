@@ -35,27 +35,25 @@ _challenge_event = threading.Event()
 
 
 def _dismiss_overlays(page):
-    """Dismiss cookie/consent dialogs before interacting with the page."""
-    selectors = [
-        'button:has-text("Allow all cookies")',
-        'button:has-text("Allow essential and optional cookies")',
-        'button:has-text("Allow essential cookies only")',
-        'button:has-text("Allow essential")',
-        'button:has-text("Decline optional cookies")',
-        'button:has-text("Only allow essential cookies")',
-        'button:has-text("Accept all")',
-        'button:has-text("Accept All")',
-    ]
-    for sel in selectors:
-        try:
-            btn = page.locator(sel).first
-            if btn.is_visible(timeout=1500):
-                btn.click()
-                be.human_delay(0.8, 1.5)
-                logger.info("Dismissed overlay: %s", sel)
-                return
-        except Exception:
-            continue
+    """Dismiss Instagram's cookie/consent dialog via JS (bypasses overlay detection)."""
+    try:
+        dismissed = page.evaluate("""() => {
+            const keywords = [
+                'Allow all', 'Allow essential', 'Decline optional',
+                'Accept all', 'Only allow essential', 'Reject all'
+            ];
+            const buttons = Array.from(document.querySelectorAll('button'));
+            for (const kw of keywords) {
+                const btn = buttons.find(b => b.innerText && b.innerText.trim().startsWith(kw));
+                if (btn) { btn.click(); return btn.innerText.trim(); }
+            }
+            return null;
+        }""")
+        if dismissed:
+            logger.info("Dismissed cookie overlay via JS: %s", dismissed)
+            be.human_delay(0.8, 1.2)
+    except Exception as e:
+        logger.debug("Overlay dismiss (non-fatal): %s", e)
     return login_state["status"] == "logged_in"
 
 
