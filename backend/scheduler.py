@@ -155,7 +155,7 @@ def auto_unfollow_job():
             delay = random.randint(30, 90)
             ev.job_action("unfollow", record.target_username, True, idx, delay_seconds=delay)
             try:
-                ig.unfollow_user(record.target_user_id, delay_min=30, delay_max=90)
+                ig.unfollow_user(record.target_username, delay_min=30, delay_max=90)
                 record.unfollowed_at = datetime.datetime.utcnow()
                 record.is_active = False
                 s.unfollows_today += 1
@@ -244,7 +244,7 @@ def auto_follow_job():
 
         try:
             ig.follow_user(
-                item.target_user_id,
+                item.target_username,
                 delay_min=s.follow_delay_min,
                 delay_max=s.follow_delay_max,
             )

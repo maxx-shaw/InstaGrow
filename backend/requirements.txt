@@ -1,8 +1,6 @@
 fastapi
 uvicorn[standard]
-instagrapi
+playwright
 sqlalchemy
 apscheduler
 python-multipart
-pillow
-httpx
