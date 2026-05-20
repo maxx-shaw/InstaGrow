@@ -240,9 +240,26 @@
           <circle cx="12" cy="12" r="4" stroke="white" stroke-width="1.5" fill="none"/>
           <circle cx="17.5" cy="6.5" r="1" fill="white"/>
         </svg>
-        <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">InstaGrow</h1>
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">SocialReach</h1>
+        <span style="font-size:0.65rem;background:rgba(59,130,246,0.25);color:#60a5fa;border-radius:4px;padding:2px 6px;font-weight:600;letter-spacing:0.04em;align-self:center;">v2</span>
       </div>
-      <p class="text-slate-400 text-sm">Instagram Growth Manager</p>
+      <p class="text-slate-400 text-sm">Browser-powered social growth — no API limits</p>
+
+      <!-- Platform selector -->
+      <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+        <button onclick="selectPlatform('instagram')" id="platform-instagram"
+          style="flex:1;padding:0.5rem;border-radius:0.5rem;border:1px solid rgba(59,130,246,0.6);background:rgba(59,130,246,0.15);color:#60a5fa;font-size:0.75rem;font-weight:600;cursor:pointer;">
+          📸 Instagram
+        </button>
+        <button onclick="selectPlatform('linkedin')" id="platform-linkedin"
+          style="flex:1;padding:0.5rem;border-radius:0.5rem;border:1px solid #1e293b;background:transparent;color:#94a3b8;font-size:0.75rem;font-weight:600;cursor:pointer;">
+          💼 LinkedIn
+        </button>
+        <button onclick="selectPlatform('x')" id="platform-x"
+          style="flex:1;padding:0.5rem;border-radius:0.5rem;border:1px solid #1e293b;background:transparent;color:#94a3b8;font-size:0.75rem;font-weight:600;cursor:pointer;">
+          𝕏 X
+        </button>
+      </div>
     </div>
 
     <div class="card">
@@ -250,12 +267,12 @@
         <!-- Tab switcher -->
         <div style="display:flex;gap:0;margin-bottom:1.25rem;background:#0f172a;border-radius:0.5rem;padding:3px;">
           <button id="tab-password" onclick="switchLoginTab('password')"
-            style="flex:1;padding:0.375rem 0.5rem;border-radius:0.375rem;font-size:0.8rem;font-weight:500;border:none;cursor:pointer;transition:all 0.15s;background:linear-gradient(to right,#9333ea,#db2777);color:#fff;">
+            style="flex:1;padding:0.375rem 0.5rem;border-radius:0.375rem;font-size:0.8rem;font-weight:500;border:none;cursor:pointer;transition:all 0.15s;background:linear-gradient(to right,#2563eb,#0891b2);color:#fff;">
             Username &amp; Password
           </button>
           <button id="tab-session" onclick="switchLoginTab('session')"
             style="flex:1;padding:0.375rem 0.5rem;border-radius:0.375rem;font-size:0.8rem;font-weight:500;border:none;cursor:pointer;transition:all 0.15s;background:transparent;color:#94a3b8;">
-            Session ID <span style="font-size:0.65rem;background:rgba(168,85,247,0.2);color:#c084fc;border-radius:4px;padding:1px 5px;margin-left:3px;">Recommended</span>
+            Session Cookie <span style="font-size:0.65rem;background:rgba(59,130,246,0.2);color:#60a5fa;border-radius:4px;padding:1px 5px;margin-left:3px;">Recommended</span>
           </button>
         </div>
 
@@ -263,7 +280,7 @@
         <div id="tab-password-content">
           <div class="space-y-3">
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Instagram Username</label>
+              <label class="block text-xs text-slate-400 mb-1">Username</label>
               <input id="login-username" type="text" placeholder="your_username" class="input" />
             </div>
             <div>
@@ -279,22 +296,17 @@
         <!-- Session ID tab -->
         <div id="tab-session-content" style="display:none;">
           <div class="space-y-3">
-            <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:0.5rem;padding:0.75rem;font-size:0.78rem;color:#c4b5fd;line-height:1.5;">
-              <strong style="display:block;margin-bottom:0.25rem;">How to get your Session ID:</strong>
-              1. Open <strong>instagram.com</strong> in Chrome/Edge and log in normally<br/>
-              2. Press <strong>F12</strong> → Application tab → Cookies → instagram.com<br/>
-              3. Find the cookie named <strong>sessionid</strong> and copy its value
-            </div>
+            <div id="session-hint" style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:0.5rem;padding:0.75rem;font-size:0.78rem;color:#93c5fd;line-height:1.5;"></div>
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Instagram Username</label>
+              <label class="block text-xs text-slate-400 mb-1">Username</label>
               <input id="session-username" type="text" placeholder="your_username" class="input" />
             </div>
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Session ID</label>
-              <input id="session-id" type="text" placeholder="Paste sessionid cookie value here" class="input" style="font-size:0.75rem;" />
+              <label id="session-id-label" class="block text-xs text-slate-400 mb-1">Session Cookie</label>
+              <input id="session-id" type="text" placeholder="Paste cookie value here" class="input" style="font-size:0.75rem;" />
             </div>
             <button onclick="doSessionLogin()" class="btn-primary w-full" style="justify-content:center;">
-              Connect via Session ID
+              Connect via Session Cookie
             </button>
           </div>
         </div>
@@ -304,7 +316,7 @@
 
       <div id="challenge-section" style="display:none">
         <h2 class="text-lg font-semibold mb-1">Verification Required</h2>
-        <p id="challenge-desc" class="text-sm text-slate-400 mb-4">Instagram sent a verification code.</p>
+        <p id="challenge-desc" class="text-sm text-slate-400 mb-4">A verification code was sent.</p>
         <div class="space-y-3">
           <input id="challenge-code" type="text" placeholder="Enter 6-digit code" class="input text-center text-xl tracking-widest" maxlength="8" />
           <button onclick="submitChallenge()" class="btn-primary w-full">Verify</button>
@@ -843,7 +855,7 @@
           <h3 class="font-semibold mb-4">Add to Blacklist</h3>
           <div class="space-y-3">
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Instagram Username</label>
+              <label class="block text-xs text-slate-400 mb-1">Username</label>
               <input id="bl-username" type="text" placeholder="username_here" class="input" />
             </div>
             <div>
@@ -885,7 +897,7 @@
           <p class="text-xs text-slate-500 mb-4">These accounts will never be auto-unfollowed and can't be manually unfollowed without removing them first.</p>
           <div class="space-y-3">
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Instagram Username</label>
+              <label class="block text-xs text-slate-400 mb-1">Username</label>
               <input id="wl-username" type="text" placeholder="username_here" class="input" />
             </div>
             <div>
@@ -952,11 +964,14 @@ let currentActivityPage = 1;
 let automationSettings = {};
 let selectedFollowIds = new Set();
 let pendingChallengeType = 'challenge';  // 'challenge' | 'totp'
+let activePlatform = 'instagram';
 
 // ==================== INIT ====================
 async function init() {
+  selectPlatform('instagram');
   const status = await api('GET', '/api/auth/status');
   if (status.status === 'logged_in') {
+    if (status.platform) activePlatform = status.platform;
     showApp(status.username);
   } else {
     showLogin();
@@ -984,12 +999,51 @@ function toggleDrawer() {
   document.getElementById('mobile-overlay').classList.toggle('open');
 }
 
+const _platformHints = {
+  instagram: {
+    site: 'instagram.com', cookie: 'sessionid',
+    hint: '1. Open <strong>instagram.com</strong> in Chrome/Edge and log in<br/>2. Press <strong>F12</strong> → Application → Cookies → instagram.com<br/>3. Copy the value of <strong>sessionid</strong>',
+  },
+  linkedin: {
+    site: 'linkedin.com', cookie: 'li_at',
+    hint: '1. Open <strong>linkedin.com</strong> in Chrome/Edge and log in<br/>2. Press <strong>F12</strong> → Application → Cookies → linkedin.com<br/>3. Copy the value of <strong>li_at</strong>',
+  },
+  x: {
+    site: 'x.com', cookie: 'auth_token',
+    hint: '1. Open <strong>x.com</strong> in Chrome/Edge and log in<br/>2. Press <strong>F12</strong> → Application → Cookies → x.com<br/>3. Copy the value of <strong>auth_token</strong>',
+  },
+};
+
+function selectPlatform(p) {
+  activePlatform = p;
+  ['instagram', 'linkedin', 'x'].forEach(id => {
+    const btn = document.getElementById('platform-' + id);
+    if (!btn) return;
+    if (id === p) {
+      btn.style.borderColor = 'rgba(59,130,246,0.6)';
+      btn.style.background = 'rgba(59,130,246,0.15)';
+      btn.style.color = '#60a5fa';
+    } else {
+      btn.style.borderColor = '#1e293b';
+      btn.style.background = 'transparent';
+      btn.style.color = '#94a3b8';
+    }
+  });
+  const info = _platformHints[p];
+  if (info) {
+    document.getElementById('session-hint').innerHTML =
+      '<strong style="display:block;margin-bottom:0.25rem;">How to get your session cookie:</strong>' + info.hint;
+    document.getElementById('session-id-label').textContent = info.cookie + ' cookie';
+    document.getElementById('session-id').placeholder = 'Paste ' + info.cookie + ' value here';
+  }
+}
+
 // ==================== LOGIN TABS ====================
 function switchLoginTab(tab) {
   const isPassword = tab === 'password';
   document.getElementById('tab-password-content').style.display = isPassword ? 'block' : 'none';
   document.getElementById('tab-session-content').style.display  = isPassword ? 'none'  : 'block';
-  const activeStyle  = 'background:linear-gradient(to right,#9333ea,#db2777);color:#fff;';
+  const activeStyle  = 'background:linear-gradient(to right,#2563eb,#0891b2);color:#fff;';
   const inactiveStyle = 'background:transparent;color:#94a3b8;';
   document.getElementById('tab-password').style.cssText = (isPassword  ? activeStyle : inactiveStyle) + 'flex:1;padding:0.375rem 0.5rem;border-radius:0.375rem;font-size:0.8rem;font-weight:500;border:none;cursor:pointer;transition:all 0.15s;';
   document.getElementById('tab-session').style.cssText  = (!isPassword ? activeStyle : inactiveStyle) + 'flex:1;padding:0.375rem 0.5rem;border-radius:0.375rem;font-size:0.8rem;font-weight:500;border:none;cursor:pointer;transition:all 0.15s;';
@@ -1001,7 +1055,7 @@ async function doSessionLogin() {
   if (!username || !sessionId) { showMsg('Please enter both username and session ID', 'error'); return; }
   showStatusMsg('Connecting...', 'info');
   try {
-    await api('POST', '/api/auth/login-session', { username, session_id: sessionId });
+    await api('POST', '/api/auth/login-session', { username, session_id: sessionId, platform: activePlatform });
     pollLoginStatus();
   } catch(e) {
     showStatusMsg(e.message, 'error');
@@ -1019,7 +1073,7 @@ async function doLogin() {
   btn.innerHTML = '<span class="loading-spinner"></span><span>Connecting...</span>';
   showStatusMsg('Connecting to Instagram...', 'info');
 
-  await api('POST', '/api/auth/login', { username, password });
+  await api('POST', '/api/auth/login', { username, password, platform: activePlatform });
   pollLoginStatus();
 }
 

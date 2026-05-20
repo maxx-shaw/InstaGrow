@@ -29,7 +29,8 @@ class Account(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, nullable=False)
     user_id = Column(String, nullable=True)
-    session_data = Column(Text, nullable=True)   # JSON settings from instagrapi
+    platform = Column(String, default="instagram", nullable=False)
+    session_data = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
@@ -131,3 +132,14 @@ class ActivityLog(Base):
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    # Add platform column to existing databases that predate this field
+    with engine.connect() as conn:
+        try:
+            conn.execute(
+                __import__("sqlalchemy").text(
+                    "ALTER TABLE accounts ADD COLUMN platform VARCHAR DEFAULT 'instagram' NOT NULL"
+                )
+            )
+            conn.commit()
+        except Exception:
+            pass  # column already exists

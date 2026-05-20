@@ -14,6 +14,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 class LoginRequest(BaseModel):
     username: str
     password: str
+    platform: str = "instagram"
 
 
 class ChallengeRequest(BaseModel):
@@ -23,15 +24,16 @@ class ChallengeRequest(BaseModel):
 class SessionLoginRequest(BaseModel):
     username: str
     session_id: str
+    platform: str = "instagram"
 
 
 @router.post("/login")
 def login(req: LoginRequest, db: Session = Depends(get_db)):
-    """Start Instagram login (may require challenge/2FA — poll /auth/status)."""
+    """Start login (may require challenge/2FA — poll /auth/status)."""
+    ig.set_platform(req.platform)
     if ig.login_state["status"] == "logged_in":
         return {"status": "already_logged_in"}
 
-    # Look up existing session for this account
     account = db.query(Account).filter(Account.username == req.username).first()
     session_json = account.session_data if account else None
 
@@ -41,16 +43,23 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
 
 @router.post("/login-session")
 def login_session(req: SessionLoginRequest, db: Session = Depends(get_db)):
-    """Login using a browser session ID cookie — avoids password-based login blocks."""
+    """Login using a browser session cookie — avoids password-based login blocks."""
+    ig.set_platform(req.platform)
     if ig.login_state["status"] == "logged_in":
         return {"status": "already_logged_in"}
     ig.login_by_sessionid_async(req.username, req.session_id)
     return {"status": "logging_in"}
 
 
+@router.get("/platform")
+def current_platform():
+    return {"platform": ig.get_platform()}
+
+
 @router.get("/status")
 def status(db: Session = Depends(get_db)):
     state = ig.login_state.copy()
+    state["platform"] = ig.get_platform()
 
     if state["status"] == "logged_in":
         my_id = ig.get_my_user_id()
@@ -59,10 +68,11 @@ def status(db: Session = Depends(get_db)):
         # Persist / update account record
         account = db.query(Account).filter(Account.username == username).first()
         if not account:
-            account = Account(username=username, user_id=my_id)
+            account = Account(username=username, user_id=my_id, platform=ig.get_platform())
             db.add(account)
         else:
             account.user_id = my_id
+            account.platform = ig.get_platform()
 
         session_json = ig.get_session_json()
         if session_json:
