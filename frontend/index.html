@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SocialReach v2</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%25' stop-color='%23833ab4'/><stop offset='50%25' stop-color='%23fd1d1d'/><stop offset='100%25' stop-color='%23fcb045'/></linearGradient></defs><rect width='24' height='24' rx='6' fill='url(%23g)'/><circle cx='12' cy='12' r='4' stroke='white' stroke-width='1.5' fill='none'/><circle cx='17.5' cy='6.5' r='1' fill='white'/></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%25' stop-color='%232563eb'/><stop offset='100%25' stop-color='%2306b6d4'/></linearGradient></defs><rect width='24' height='24' rx='7' fill='url(%23g)'/><circle cx='12' cy='15.5' r='1.8' fill='white'/><path d='M8.5 13 Q8.5 9 12 9 Q15.5 9 15.5 13' stroke='white' stroke-width='1.8' fill='none' stroke-linecap='round'/><path d='M5.5 11 Q5.5 5.5 12 5.5 Q18.5 5.5 18.5 11' stroke='white' stroke-width='1.8' fill='none' stroke-linecap='round' opacity='0.55'/></svg>" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { background: #0f0f17; color: #e2e8f0; font-family: system-ui, sans-serif; }
+    body { background: #080c14; color: #e2e8f0; font-family: system-ui, sans-serif; }
 
     /* Sidebar links */
     .sidebar-link {
@@ -19,8 +19,8 @@
     .sidebar-link:hover { color: #fff; background: rgba(255,255,255,0.05); }
     .sidebar-link.active {
       color: #fff;
-      background: linear-gradient(to right, rgba(147,51,234,0.3), rgba(219,39,119,0.2));
-      border-color: rgba(168,85,247,0.3);
+      background: linear-gradient(to right, rgba(37,99,235,0.3), rgba(8,145,178,0.2));
+      border-color: rgba(59,130,246,0.3);
     }
 
     /* Cards */
@@ -33,12 +33,12 @@
     /* Buttons */
     .btn-primary {
       padding: 0.5rem 1rem;
-      background: linear-gradient(to right, #9333ea, #db2777);
+      background: linear-gradient(to right, #2563eb, #0891b2);
       color: #fff; border-radius: 0.5rem; font-weight: 500;
       font-size: 0.875rem; border: none; cursor: pointer; transition: all 0.15s;
       display: inline-flex; align-items: center; gap: 0.375rem;
     }
-    .btn-primary:hover { background: linear-gradient(to right, #a855f7, #ec4899); }
+    .btn-primary:hover { background: linear-gradient(to right, #3b82f6, #06b6d4); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-secondary {
       padding: 0.5rem 1rem; background: #334155;
@@ -64,14 +64,14 @@
       transition: border-color 0.15s; box-sizing: border-box;
     }
     .input::placeholder { color: #64748b; }
-    .input:focus { border-color: #a855f7; }
+    .input:focus { border-color: #3b82f6; }
 
     /* Badges */
     .badge-green  { display:inline-flex;align-items:center;padding:0.125rem 0.5rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3); }
     .badge-red    { display:inline-flex;align-items:center;padding:0.125rem 0.5rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3); }
     .badge-yellow { display:inline-flex;align-items:center;padding:0.125rem 0.5rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background:rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.3); }
     .badge-gray   { display:inline-flex;align-items:center;padding:0.125rem 0.5rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background:rgba(71,85,105,0.5);color:#94a3b8;border:1px solid #475569; }
-    .badge-purple { display:inline-flex;align-items:center;padding:0.125rem 0.5rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3); }
+    .badge-purple { display:inline-flex;align-items:center;padding:0.125rem 0.5rem;border-radius:9999px;font-size:0.75rem;font-weight:500;background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3); }
 
     /* Toggle switch */
     .toggle {
@@ -79,7 +79,7 @@
       height: 1.5rem; width: 2.75rem; border-radius: 9999px;
       transition: background 0.2s; cursor: pointer; flex-shrink: 0;
     }
-    .toggle.on  { background: linear-gradient(to right, #9333ea, #db2777); }
+    .toggle.on  { background: linear-gradient(to right, #2563eb, #0891b2); }
     .toggle.off { background: #334155; }
     .toggle-knob {
       display: inline-block; height: 1rem; width: 1rem;
@@ -115,21 +115,21 @@
     /* Live card job spinner */
     .job-spinner {
       width: 36px; height: 36px; flex-shrink: 0;
-      border: 3px solid rgba(168,85,247,0.25); border-radius: 50%;
-      border-top-color: #a855f7; animation: spin 0.75s linear infinite;
+      border: 3px solid rgba(59,130,246,0.25); border-radius: 50%;
+      border-top-color: #3b82f6; animation: spin 0.75s linear infinite;
     }
 
     /* Live card running state */
     #live-card.running {
-      border-color: rgba(168,85,247,0.4);
-      box-shadow: 0 0 0 1px rgba(168,85,247,0.15), 0 4px 24px rgba(168,85,247,0.08);
+      border-color: rgba(59,130,246,0.4);
+      box-shadow: 0 0 0 1px rgba(59,130,246,0.15), 0 4px 24px rgba(59,130,246,0.08);
     }
 
     /* Current action block */
     .live-now-block {
       display: flex; align-items: center; gap: 0.875rem;
       padding: 0.875rem 1rem; border-radius: 0.625rem;
-      background: rgba(88,28,135,0.18); border: 1px solid rgba(168,85,247,0.3);
+      background: rgba(30,58,138,0.18); border: 1px solid rgba(59,130,246,0.3);
       margin-bottom: 1rem;
     }
 
@@ -139,7 +139,7 @@
     }
     .live-progress-fill {
       height: 100%; border-radius: 9999px;
-      background: linear-gradient(to right, #9333ea, #db2777);
+      background: linear-gradient(to right, #2563eb, #0891b2);
       transition: width 0.5s ease;
       position: relative; overflow: hidden;
     }
@@ -154,7 +154,7 @@
     /* Countdown timer */
     .live-timer {
       font-family: ui-monospace, monospace; font-size: 1.75rem;
-      font-weight: 700; color: #a855f7; line-height: 1;
+      font-weight: 700; color: #3b82f6; line-height: 1;
       min-width: 4ch; text-align: right;
     }
 
@@ -235,20 +235,21 @@
     <div class="text-center mb-8">
       <div class="inline-flex items-center gap-2 mb-3">
         <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none">
-          <defs><linearGradient id="ig" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#833ab4"/><stop offset="50%" stop-color="#fd1d1d"/><stop offset="100%" stop-color="#fcb045"/></linearGradient></defs>
-          <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#ig)"/>
-          <circle cx="12" cy="12" r="4" stroke="white" stroke-width="1.5" fill="none"/>
-          <circle cx="17.5" cy="6.5" r="1" fill="white"/>
+          <defs><linearGradient id="sr0" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2563eb"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs>
+          <rect width="24" height="24" rx="7" fill="url(#sr0)"/>
+          <circle cx="12" cy="15.5" r="1.8" fill="white"/>
+          <path d="M8.5 13 Q8.5 9 12 9 Q15.5 9 15.5 13" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <path d="M5.5 11 Q5.5 5.5 12 5.5 Q18.5 5.5 18.5 11" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.55"/>
         </svg>
-        <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">SocialReach</h1>
-        <span style="font-size:0.65rem;background:rgba(168,85,247,0.25);color:#c084fc;border-radius:4px;padding:2px 6px;font-weight:600;letter-spacing:0.04em;align-self:center;">v2</span>
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">SocialReach</h1>
+        <span style="font-size:0.65rem;background:rgba(59,130,246,0.25);color:#60a5fa;border-radius:4px;padding:2px 6px;font-weight:600;letter-spacing:0.04em;align-self:center;">v2</span>
       </div>
       <p class="text-slate-400 text-sm">Browser-powered social growth — no API limits</p>
 
       <!-- Platform selector -->
       <div style="display:flex;gap:0.5rem;margin-top:1rem;">
         <button onclick="selectPlatform('instagram')" id="platform-instagram"
-          style="flex:1;padding:0.5rem;border-radius:0.5rem;border:1px solid rgba(168,85,247,0.6);background:rgba(168,85,247,0.15);color:#c084fc;font-size:0.75rem;font-weight:600;cursor:pointer;">
+          style="flex:1;padding:0.5rem;border-radius:0.5rem;border:1px solid rgba(59,130,246,0.6);background:rgba(59,130,246,0.15);color:#60a5fa;font-size:0.75rem;font-weight:600;cursor:pointer;">
           📸 Instagram
         </button>
         <button onclick="selectPlatform('linkedin')" id="platform-linkedin"
@@ -263,12 +264,12 @@
         <!-- Tab switcher -->
         <div style="display:flex;gap:0;margin-bottom:1.25rem;background:#0f172a;border-radius:0.5rem;padding:3px;">
           <button id="tab-password" onclick="switchLoginTab('password')"
-            style="flex:1;padding:0.375rem 0.5rem;border-radius:0.375rem;font-size:0.8rem;font-weight:500;border:none;cursor:pointer;transition:all 0.15s;background:linear-gradient(to right,#9333ea,#db2777);color:#fff;">
+            style="flex:1;padding:0.375rem 0.5rem;border-radius:0.375rem;font-size:0.8rem;font-weight:500;border:none;cursor:pointer;transition:all 0.15s;background:linear-gradient(to right,#2563eb,#0891b2);color:#fff;">
             Username &amp; Password
           </button>
           <button id="tab-session" onclick="switchLoginTab('session')"
             style="flex:1;padding:0.375rem 0.5rem;border-radius:0.375rem;font-size:0.8rem;font-weight:500;border:none;cursor:pointer;transition:all 0.15s;background:transparent;color:#94a3b8;">
-            Session ID <span style="font-size:0.65rem;background:rgba(168,85,247,0.2);color:#c084fc;border-radius:4px;padding:1px 5px;margin-left:3px;">Recommended</span>
+            Session ID <span style="font-size:0.65rem;background:rgba(59,130,246,0.2);color:#60a5fa;border-radius:4px;padding:1px 5px;margin-left:3px;">Recommended</span>
           </button>
         </div>
 
@@ -276,7 +277,7 @@
         <div id="tab-password-content">
           <div class="space-y-3">
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Instagram Username</label>
+              <label class="block text-xs text-slate-400 mb-1">Username</label>
               <input id="login-username" type="text" placeholder="your_username" class="input" />
             </div>
             <div>
@@ -292,14 +293,14 @@
         <!-- Session ID tab -->
         <div id="tab-session-content" style="display:none;">
           <div class="space-y-3">
-            <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:0.5rem;padding:0.75rem;font-size:0.78rem;color:#c4b5fd;line-height:1.5;">
+            <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:0.5rem;padding:0.75rem;font-size:0.78rem;color:#c4b5fd;line-height:1.5;">
               <strong style="display:block;margin-bottom:0.25rem;">How to get your Session ID:</strong>
               1. Open <strong>instagram.com</strong> in Chrome/Edge and log in normally<br/>
               2. Press <strong>F12</strong> → Application tab → Cookies → instagram.com<br/>
               3. Find the cookie named <strong>sessionid</strong> and copy its value
             </div>
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Instagram Username</label>
+              <label class="block text-xs text-slate-400 mb-1">Username</label>
               <input id="session-username" type="text" placeholder="your_username" class="input" />
             </div>
             <div>
@@ -317,7 +318,7 @@
 
       <div id="challenge-section" style="display:none">
         <h2 class="text-lg font-semibold mb-1">Verification Required</h2>
-        <p id="challenge-desc" class="text-sm text-slate-400 mb-4">Instagram sent a verification code.</p>
+        <p id="challenge-desc" class="text-sm text-slate-400 mb-4">A verification code was sent.</p>
         <div class="space-y-3">
           <input id="challenge-code" type="text" placeholder="Enter 6-digit code" class="input text-center text-xl tracking-widest" maxlength="8" />
           <button onclick="submitChallenge()" class="btn-primary w-full">Verify</button>
@@ -339,12 +340,13 @@
     </button>
     <div class="flex items-center gap-1.5 flex-1">
       <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none">
-        <defs><linearGradient id="igm" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#833ab4"/><stop offset="50%" stop-color="#fd1d1d"/><stop offset="100%" stop-color="#fcb045"/></linearGradient></defs>
-        <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#igm)"/>
-        <circle cx="12" cy="12" r="4" stroke="white" stroke-width="1.5" fill="none"/>
-        <circle cx="17.5" cy="6.5" r="1" fill="white"/>
+        <defs><linearGradient id="srm" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2563eb"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs>
+        <rect width="24" height="24" rx="7" fill="url(#srm)"/>
+        <circle cx="12" cy="15.5" r="1.8" fill="white"/>
+        <path d="M8.5 13 Q8.5 9 12 9 Q15.5 9 15.5 13" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <path d="M5.5 11 Q5.5 5.5 12 5.5 Q18.5 5.5 18.5 11" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.55"/>
       </svg>
-      <span class="font-bold text-white text-sm">SocialReach <span style="font-size:0.6rem;background:rgba(168,85,247,0.25);color:#c084fc;border-radius:3px;padding:1px 4px;">v2</span></span>
+      <span class="font-bold text-white text-sm">SocialReach <span style="font-size:0.6rem;background:rgba(59,130,246,0.25);color:#60a5fa;border-radius:3px;padding:1px 4px;">v2</span></span>
     </div>
     <span id="mobile-username" class="text-xs text-slate-400 truncate max-w-24"></span>
   </header>
@@ -356,10 +358,11 @@
   <div class="mobile-drawer" id="mobile-drawer">
     <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-800">
       <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none">
-        <defs><linearGradient id="igd" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#833ab4"/><stop offset="50%" stop-color="#fd1d1d"/><stop offset="100%" stop-color="#fcb045"/></linearGradient></defs>
-        <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#igd)"/>
-        <circle cx="12" cy="12" r="4" stroke="white" stroke-width="1.5" fill="none"/>
-        <circle cx="17.5" cy="6.5" r="1" fill="white"/>
+        <defs><linearGradient id="srd" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2563eb"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs>
+        <rect width="24" height="24" rx="7" fill="url(#srd)"/>
+        <circle cx="12" cy="15.5" r="1.8" fill="white"/>
+        <path d="M8.5 13 Q8.5 9 12 9 Q15.5 9 15.5 13" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <path d="M5.5 11 Q5.5 5.5 12 5.5 Q18.5 5.5 18.5 11" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.55"/>
       </svg>
       <div>
         <p class="font-bold text-white text-sm">SocialReach</p>
@@ -403,7 +406,7 @@
   <aside id="desktop-sidebar" class="w-56 flex-shrink-0 flex flex-col bg-slate-900/40 border-r border-slate-800 p-3 overflow-y-auto">
     <div class="flex items-center gap-2 px-2 py-3 mb-4">
       <svg class="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none">
-        <defs><linearGradient id="ig2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#833ab4"/><stop offset="50%" stop-color="#fd1d1d"/><stop offset="100%" stop-color="#fcb045"/></linearGradient></defs>
+        <defs><linearGradient id="ig2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2563eb"/><stop offset="50%" stop-color="#0ea5e9"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs>
         <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#ig2)"/>
         <circle cx="12" cy="12" r="4" stroke="white" stroke-width="1.5" fill="none"/>
         <circle cx="17.5" cy="6.5" r="1" fill="white"/>
@@ -467,12 +470,12 @@
         <h1 class="text-xl font-bold">Dashboard</h1>
         <button onclick="syncFollowing()" id="sync-btn" class="btn-secondary flex items-center gap-2 text-xs">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-          Sync from Instagram
+          Sync Following
         </button>
       </div>
       <div id="rate-limit-banner" style="display:none;" class="mb-4 p-3 rounded-lg border border-yellow-700 bg-yellow-950 text-yellow-300 text-sm flex items-center gap-3">
         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-        <span>Instagram rate limit hit — sync available again in <strong id="rate-limit-countdown"></strong></span>
+        <span>Rate limit hit — sync available again in <strong id="rate-limit-countdown"></strong></span>
       </div>
 
       <!-- Live Activity Card -->
@@ -504,7 +507,7 @@
           <div id="live-progress-wrap" style="margin-bottom:1rem;">
             <div class="flex justify-between text-xs mb-2" style="color:#94a3b8;">
               <span id="live-progress-label">Processing…</span>
-              <span><span id="live-progress-count">0 / 0</span> &nbsp;<span id="live-progress-pct" style="color:#a855f7;font-weight:600;">0%</span></span>
+              <span><span id="live-progress-count">0 / 0</span> &nbsp;<span id="live-progress-pct" style="color:#3b82f6;font-weight:600;">0%</span></span>
             </div>
             <div class="live-progress-track">
               <div id="live-progress-bar" class="live-progress-fill" style="width:0%"></div>
@@ -608,7 +611,7 @@
       <div class="card">
         <div class="flex items-center justify-between mb-3">
           <h3 class="text-sm font-semibold text-slate-300">Recent Activity</h3>
-          <button onclick="showView('activity')" class="text-xs text-purple-400 hover:text-purple-300">View all →</button>
+          <button onclick="showView('activity')" class="text-xs text-blue-400 hover:text-blue-400">View all →</button>
         </div>
         <div id="recent-activity" class="space-y-1.5">
           <p class="text-sm text-slate-500">Loading...</p>
@@ -675,13 +678,13 @@
 
           <div class="space-y-4">
             <div>
-              <label class="block text-sm text-slate-300 mb-1">Unfollow after <span id="val-unfollow_after_days" class="text-purple-400 font-semibold"></span> days</label>
+              <label class="block text-sm text-slate-300 mb-1">Unfollow after <span id="val-unfollow_after_days" class="text-blue-400 font-semibold"></span> days</label>
               <input type="range" id="range-unfollow_after_days" min="1" max="60" oninput="updateRangeVal('unfollow_after_days')" onchange="saveSetting('unfollow_after_days', this.value)" class="w-full accent-purple-500" />
               <div class="flex justify-between text-xs text-slate-600 mt-1"><span>1 day</span><span>60 days</span></div>
             </div>
 
             <div>
-              <label class="block text-sm text-slate-300 mb-1">Max unfollows per day: <span id="val-unfollow_per_day" class="text-purple-400 font-semibold"></span></label>
+              <label class="block text-sm text-slate-300 mb-1">Max unfollows per day: <span id="val-unfollow_per_day" class="text-blue-400 font-semibold"></span></label>
               <input type="range" id="range-unfollow_per_day" min="5" max="200" oninput="updateRangeVal('unfollow_per_day')" onchange="saveSetting('unfollow_per_day', this.value)" class="w-full accent-purple-500" />
               <div class="flex justify-between text-xs text-slate-600 mt-1"><span>5</span><span>200</span></div>
             </div>
@@ -741,13 +744,13 @@
 
           <div class="space-y-4">
             <div>
-              <label class="block text-sm text-slate-300 mb-1">Max follows per day: <span id="val-follow_per_day" class="text-purple-400 font-semibold"></span></label>
+              <label class="block text-sm text-slate-300 mb-1">Max follows per day: <span id="val-follow_per_day" class="text-blue-400 font-semibold"></span></label>
               <input type="range" id="range-follow_per_day" min="5" max="150" oninput="updateRangeVal('follow_per_day')" onchange="saveSetting('follow_per_day', this.value)" class="w-full accent-purple-500" />
               <div class="flex justify-between text-xs text-slate-600 mt-1"><span>5</span><span>150 (safe max)</span></div>
             </div>
 
             <div>
-              <label class="block text-sm text-slate-300 mb-1">Delay between follows: <span id="val-follow_delay_min" class="text-purple-400 font-semibold"></span>s – <span id="val-follow_delay_max" class="text-purple-400 font-semibold"></span>s</label>
+              <label class="block text-sm text-slate-300 mb-1">Delay between follows: <span id="val-follow_delay_min" class="text-blue-400 font-semibold"></span>s – <span id="val-follow_delay_max" class="text-blue-400 font-semibold"></span>s</label>
               <div class="grid grid-cols-2 gap-3">
                 <div>
                   <label class="text-xs text-slate-500">Min (seconds)</label>
@@ -761,7 +764,7 @@
             </div>
 
             <div>
-              <label class="block text-sm text-slate-300 mb-1">Min mutual follows: <span id="val-mutual_follows_threshold" class="text-purple-400 font-semibold"></span></label>
+              <label class="block text-sm text-slate-300 mb-1">Min mutual follows: <span id="val-mutual_follows_threshold" class="text-blue-400 font-semibold"></span></label>
               <input type="range" id="range-mutual_follows_threshold" min="1" max="20" oninput="updateRangeVal('mutual_follows_threshold')" onchange="saveSetting('mutual_follows_threshold', this.value)" class="w-full accent-purple-500" />
               <div class="flex justify-between text-xs text-slate-600 mt-1"><span>1 mutual</span><span>20 mutuals</span></div>
             </div>
@@ -773,7 +776,7 @@
           <p class="text-xs text-slate-500">Controls how we discover new accounts to follow (followers-of-following)</p>
 
           <div>
-            <label class="block text-sm text-slate-300 mb-1">Scan depth: <span id="val-scan_depth" class="text-purple-400 font-semibold"></span> accounts</label>
+            <label class="block text-sm text-slate-300 mb-1">Scan depth: <span id="val-scan_depth" class="text-blue-400 font-semibold"></span> accounts</label>
             <input type="range" id="range-scan_depth" min="1" max="20" oninput="updateRangeVal('scan_depth')" onchange="saveSetting('scan_depth', this.value)" class="w-full accent-purple-500" />
             <p class="text-xs text-slate-500 mt-1">Number of your followings to probe for their followers</p>
           </div>
@@ -856,7 +859,7 @@
           <h3 class="font-semibold mb-4">Add to Blacklist</h3>
           <div class="space-y-3">
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Instagram Username</label>
+              <label class="block text-xs text-slate-400 mb-1">Username</label>
               <input id="bl-username" type="text" placeholder="username_here" class="input" />
             </div>
             <div>
@@ -898,7 +901,7 @@
           <p class="text-xs text-slate-500 mb-4">These accounts will never be auto-unfollowed and can't be manually unfollowed without removing them first.</p>
           <div class="space-y-3">
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Instagram Username</label>
+              <label class="block text-xs text-slate-400 mb-1">Username</label>
               <input id="wl-username" type="text" placeholder="username_here" class="input" />
             </div>
             <div>
@@ -1001,9 +1004,9 @@ function selectPlatform(p) {
   const ig = document.getElementById('platform-instagram');
   const li = document.getElementById('platform-linkedin');
   if (p === 'instagram') {
-    ig.style.borderColor = 'rgba(168,85,247,0.6)';
-    ig.style.background = 'rgba(168,85,247,0.15)';
-    ig.style.color = '#c084fc';
+    ig.style.borderColor = 'rgba(59,130,246,0.6)';
+    ig.style.background = 'rgba(59,130,246,0.15)';
+    ig.style.color = '#60a5fa';
     li.style.borderColor = '#1e293b';
     li.style.background = 'transparent';
     li.style.color = '#475569';
@@ -1016,7 +1019,7 @@ function switchLoginTab(tab) {
   const isPassword = tab === 'password';
   document.getElementById('tab-password-content').style.display = isPassword ? 'block' : 'none';
   document.getElementById('tab-session-content').style.display  = isPassword ? 'none'  : 'block';
-  const activeStyle  = 'background:linear-gradient(to right,#9333ea,#db2777);color:#fff;';
+  const activeStyle  = 'background:linear-gradient(to right,#2563eb,#0891b2);color:#fff;';
   const inactiveStyle = 'background:transparent;color:#94a3b8;';
   document.getElementById('tab-password').style.cssText = (isPassword  ? activeStyle : inactiveStyle) + 'flex:1;padding:0.375rem 0.5rem;border-radius:0.375rem;font-size:0.8rem;font-weight:500;border:none;cursor:pointer;transition:all 0.15s;';
   document.getElementById('tab-session').style.cssText  = (!isPassword ? activeStyle : inactiveStyle) + 'flex:1;padding:0.375rem 0.5rem;border-radius:0.375rem;font-size:0.8rem;font-weight:500;border:none;cursor:pointer;transition:all 0.15s;';
@@ -1044,7 +1047,7 @@ async function doLogin() {
   const btn = document.getElementById('login-btn');
   btn.disabled = true;
   btn.innerHTML = '<span class="loading-spinner"></span><span>Connecting...</span>';
-  showStatusMsg('Connecting to Instagram...', 'info');
+  showStatusMsg('Connecting account...', 'info');
 
   await api('POST', '/api/auth/login', { username, password });
   pollLoginStatus();
@@ -1079,11 +1082,11 @@ function showChallengeForm(method) {
   document.getElementById('login-form-section').style.display = 'none';
   document.getElementById('challenge-section').style.display = 'block';
   const desc = {
-    email: 'Instagram sent a verification code to your email.',
-    sms: 'Instagram sent a verification code via SMS.',
+    email: 'A verification code was sent to your email.',
+    sms: 'A verification code was sent via SMS.',
     totp: 'Open your authenticator app and enter the 6-digit code.',
   };
-  document.getElementById('challenge-desc').textContent = desc[method] || 'Enter the verification code from Instagram.';
+  document.getElementById('challenge-desc').textContent = desc[method] || 'Enter the verification code.';
   hideStatusMsg();
 }
 
@@ -1234,7 +1237,7 @@ async function syncFollowing() {
   } catch(e) {
     if (e.status === 429) {
       showRateLimit(e.retry_after || 300);
-      toast('Instagram rate limit hit — try again in a few minutes', 'error');
+      toast('Rate limit hit — try again in a few minutes', 'error');
     } else {
       toast('Sync failed: ' + e.message, 'error');
       btn.disabled = false;
@@ -1243,7 +1246,7 @@ async function syncFollowing() {
     if (!_rateLimitTimer) {
       btn.disabled = false;
     }
-    btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>Sync from Instagram`;
+    btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>Sync Following`;
   }
 }
 
@@ -1716,7 +1719,7 @@ function updateLiveCard(s) {
   // Status dot
   const dot = document.getElementById('live-dot');
   if (running) {
-    dot.style.background = '#a855f7';
+    dot.style.background = '#3b82f6';
     dot.style.animation = 'pulse-dot 1.2s infinite';
   } else {
     dot.style.background = '#475569';
@@ -1805,7 +1808,7 @@ function updateLiveCard(s) {
       const row = document.createElement('div');
       row.className = 'feed-row';
       row.innerHTML = `${icon}
-        <span style="color:${success?'#cbd5e1':'#94a3b8'}">${verb} <strong style="color:#c084fc">@${s.last_username}</strong></span>
+        <span style="color:${success?'#cbd5e1':'#94a3b8'}">${verb} <strong style="color:#60a5fa">@${s.last_username}</strong></span>
         <span style="margin-left:auto;color:#475569;flex-shrink:0;font-size:0.72rem">${timeAgo(s.last_action_time)}</span>`;
       feed.prepend(row);
       if (feed.children.length > 25) feed.lastChild.remove();
@@ -1816,9 +1819,9 @@ function updateLiveCard(s) {
 // Inject pulse keyframe once
 const _style = document.createElement('style');
 _style.textContent = `@keyframes pulse-dot {
-  0%   { box-shadow: 0 0 0 0 rgba(168,85,247,0.6); }
-  70%  { box-shadow: 0 0 0 7px rgba(168,85,247,0); }
-  100% { box-shadow: 0 0 0 0 rgba(168,85,247,0); }
+  0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0.6); }
+  70%  { box-shadow: 0 0 0 7px rgba(59,130,246,0); }
+  100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
 }`;
 document.head.appendChild(_style);
 
