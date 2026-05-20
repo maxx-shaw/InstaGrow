@@ -1,0 +1,5 @@
+*.db
+*.pyc
+.venv/
+__pycache__/
+browser_profiles/
