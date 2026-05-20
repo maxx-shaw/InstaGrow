@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 import instagram_client as ig
 from database import get_db, Account, AutomationSettings, ActivityLog
 
-logger = logging.getLogger("instagrow.auth")
+logger = logging.getLogger("socialreach.auth")
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 

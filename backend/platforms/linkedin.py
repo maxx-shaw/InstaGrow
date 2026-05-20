@@ -3,7 +3,7 @@ LinkedIn automation via Playwright — coming soon.
 """
 import logging
 
-logger = logging.getLogger("instagrow.linkedin")
+logger = logging.getLogger("socialreach.linkedin")
 
 login_state: dict = {
     "status": "idle",

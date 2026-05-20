@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="InstaGrow",
+    title="SocialReach",
     description="Instagram growth management tool",
     version="1.0.0",
     lifespan=lifespan,

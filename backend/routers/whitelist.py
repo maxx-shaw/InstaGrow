@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 import instagram_client as ig
 from database import get_db, Account, Whitelist, ActivityLog
 
-logger = logging.getLogger("instagrow.whitelist")
+logger = logging.getLogger("socialreach.whitelist")
 router = APIRouter(prefix="/whitelist", tags=["whitelist"])
 
 

@@ -8,7 +8,7 @@ from database import get_db, Account, AutomationSettings
 import scheduler as sched
 import instagram_client as ig
 
-logger = logging.getLogger("instagrow.automation")
+logger = logging.getLogger("socialreach.automation")
 router = APIRouter(prefix="/automation", tags=["automation"])
 
 

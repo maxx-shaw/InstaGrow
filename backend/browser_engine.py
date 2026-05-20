@@ -11,10 +11,10 @@ import time
 from pathlib import Path
 from typing import Optional
 
-logger = logging.getLogger("instagrow.browser")
+logger = logging.getLogger("socialreach.browser")
 
-PROFILES_DIR = Path(os.environ.get("INSTAGROW_PROFILES_DIR", "./browser_profiles"))
-HEADLESS = os.environ.get("INSTAGROW_HEADLESS", "true").lower() != "false"
+PROFILES_DIR = Path(os.environ.get("SOCIALREACH_PROFILES_DIR", "./browser_profiles"))
+HEADLESS = os.environ.get("SOCIALREACH_HEADLESS", "true").lower() != "false"
 
 _lock = threading.Lock()
 _pw = None

@@ -9,7 +9,7 @@ from database import (
     FollowQueue, ActivityLog, AutomationSettings
 )
 
-logger = logging.getLogger("instagrow.stats")
+logger = logging.getLogger("socialreach.stats")
 router = APIRouter(prefix="/stats", tags=["stats"])
 
 

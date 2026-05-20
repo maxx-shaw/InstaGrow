@@ -5,7 +5,7 @@ set SCRIPT_DIR=%~dp0
 set BACKEND_DIR=%SCRIPT_DIR%backend
 set VENV_DIR=%SCRIPT_DIR%.venv
 
-echo ==^> InstaGrow
+echo ==^> SocialReach
 
 REM Check Python is installed
 where python >nul 2>nul
@@ -35,7 +35,7 @@ echo ==^> Installing Chromium browser for automation...
 playwright install chromium
 
 echo.
-echo ==^> Starting InstaGrow v2 at http://localhost:8000
+echo ==^> Starting SocialReach v2 at http://localhost:8000
 echo ==^> Press Ctrl+C to stop
 echo.
 

@@ -27,7 +27,7 @@ from database import (
     ActivityLog,
 )
 
-logger = logging.getLogger("instagrow.scheduler")
+logger = logging.getLogger("socialreach.scheduler")
 scheduler = BackgroundScheduler(timezone="UTC")
 
 

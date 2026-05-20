@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="$SCRIPT_DIR/backend"
 VENV_DIR="$SCRIPT_DIR/.venv"
 
-echo "==> InstaGrow"
+echo "==> SocialReach"
 
 # Create virtualenv if needed
 if [ ! -d "$VENV_DIR" ]; then
@@ -24,7 +24,7 @@ echo "==> Installing Chromium for browser automation..."
 playwright install chromium
 
 echo ""
-echo "==> Starting InstaGrow v2 at http://localhost:8000"
+echo "==> Starting SocialReach v2 at http://localhost:8000"
 echo ""
 
 cd "$BACKEND_DIR"

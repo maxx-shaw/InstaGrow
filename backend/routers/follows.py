@@ -10,7 +10,7 @@ from database import (
     get_db, Account, FollowRecord, Blacklist, Whitelist, ActivityLog, FollowQueue
 )
 
-logger = logging.getLogger("instagrow.follows")
+logger = logging.getLogger("socialreach.follows")
 router = APIRouter(prefix="/follows", tags=["follows"])
 
 

@@ -7,7 +7,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-DB_PATH = os.environ.get("INSTAGROW_DB_PATH", "./instagrow.db")
+DB_PATH = os.environ.get("SOCIALREACH_DB_PATH", "./socialreach.db")
 SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_PATH}"
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}

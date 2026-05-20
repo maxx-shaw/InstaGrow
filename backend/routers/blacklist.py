@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 import instagram_client as ig
 from database import get_db, Account, Blacklist, FollowQueue, ActivityLog
 
-logger = logging.getLogger("instagrow.blacklist")
+logger = logging.getLogger("socialreach.blacklist")
 router = APIRouter(prefix="/blacklist", tags=["blacklist"])
 
 

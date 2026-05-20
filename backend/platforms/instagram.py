@@ -10,7 +10,7 @@ from typing import Optional
 
 import browser_engine as be
 
-logger = logging.getLogger("instagrow.instagram")
+logger = logging.getLogger("socialreach.instagram")
 IG = "https://www.instagram.com"
 
 # ---------------------------------------------------------------------------
