@@ -96,8 +96,14 @@ def sync_following(db: Session = Depends(get_db)):
     account = _active_account(db)
     my_id = ig.get_my_user_id()
 
-    following_map = ig.get_following(my_id, amount=0)
-    follower_map = ig.get_followers(my_id, amount=0)
+    try:
+        following_map = ig.get_following(my_id, amount=0)
+        follower_map = ig.get_followers(my_id, amount=0)
+    except Exception as e:
+        err = str(e)
+        if "wait" in err.lower() or "few minutes" in err.lower() or "429" in err or "throttl" in err.lower():
+            raise HTTPException(429, "Instagram is rate-limiting this account. Wait a few minutes then try again.")
+        raise HTTPException(502, f"Instagram error: {err}")
     follower_ids = set(str(uid) for uid in follower_map.keys())
 
     now = datetime.datetime.utcnow()
