@@ -528,57 +528,102 @@ def _scrape_list_impl(list_type: str) -> dict:
         raise Exception("Not logged in")
 
     results: dict = {}
+    end_of_list = threading.Event()
 
     with _page_lock:
         page = be.get_page(_profile_key)
 
         def on_response(response):
             url = response.url
-            if "friendships" in url and list_type in url:
-                try:
-                    data = response.json()
-                    for user in data.get("users", []):
-                        pk = str(user.get("pk", ""))
-                        uname = user.get("username", "")
-                        if pk and uname:
-                            results[pk] = _UserInfo(
-                                pk=pk,
-                                username=uname,
-                                full_name=user.get("full_name", ""),
-                                profile_pic_url=user.get("profile_pic_url"),
-                            )
-                except Exception:
-                    pass
+            # Instagram API v1: /api/v1/friendships/{id}/following/ or /followers/
+            if not (("friendships" in url and list_type in url) or
+                    ("graphql" in url and list_type in url)):
+                return
+            try:
+                data = response.json()
+            except Exception:
+                return
+
+            # v1 API format: {"users": [...], "next_max_id": "..."}
+            users = data.get("users", [])
+            # GraphQL edge format fallback
+            if not users:
+                gql_key = "edge_following" if list_type == "following" else "edge_followed_by"
+                edges = (data.get("data", {})
+                             .get(gql_key, {})
+                             .get("edges", []))
+                users = [e.get("node", {}) for e in edges]
+
+            for user in users:
+                pk = str(user.get("pk", "") or user.get("id", ""))
+                uname = user.get("username", "")
+                if pk and uname:
+                    results[pk] = _UserInfo(
+                        pk=pk,
+                        username=uname,
+                        full_name=user.get("full_name", ""),
+                        profile_pic_url=user.get("profile_pic_url"),
+                    )
+
+            # No next_max_id means we've hit the end of the list
+            if "next_max_id" in data and not data["next_max_id"]:
+                end_of_list.set()
+                logger.info("End of %s list signalled by API (got %d total)", list_type, len(results))
 
         page.on("response", on_response)
         try:
             page.goto(f"{IG}/{username}/{list_type}/", wait_until="domcontentloaded")
-            be.human_delay(1.5, 2.5)
+            be.human_delay(2, 3)
 
             if "accounts/login" in page.url:
                 raise Exception("Session expired — please log in again")
 
-            # Scroll the modal to trigger paginated XHR calls
+            # Wait for the modal dialog
             try:
-                page.wait_for_selector('[role="dialog"]', timeout=5000)
+                page.wait_for_selector('[role="dialog"]', timeout=8000)
+                logger.info("Dialog found for %s/%s", username, list_type)
             except Exception:
-                pass
+                logger.warning("No dialog found for %s/%s — will try scrolling anyway", username, list_type)
+
+            # JS that finds the actual scrollable element inside the dialog
+            _SCROLL_JS = """() => {
+                const candidates = [
+                    '[role="dialog"] [style*="overflow"]',
+                    '[role="dialog"] > div > div > div',
+                    '[role="dialog"] ul',
+                    '[role="dialog"]',
+                ];
+                for (const sel of candidates) {
+                    const el = document.querySelector(sel);
+                    if (el && el.scrollHeight > el.clientHeight + 10) {
+                        el.scrollBy(0, 900);
+                        return sel;
+                    }
+                }
+                window.scrollBy(0, 900);
+                return 'window';
+            }"""
 
             last_count = -1
             stalls = 0
-            while stalls < 5:
-                if len(results) == last_count:
+            max_stalls = 10  # 10 × ~1.2s = ~12s of no new data before giving up
+
+            while stalls < max_stalls and not end_of_list.is_set():
+                scrolled_to = page.evaluate(_SCROLL_JS)
+                be.human_delay(1.0, 1.5)
+
+                current = len(results)
+                if current == last_count:
                     stalls += 1
+                    logger.debug("%s stall %d/%d at %d results (scroll target: %s)",
+                                 list_type, stalls, max_stalls, current, scrolled_to)
                 else:
                     stalls = 0
-                    last_count = len(results)
+                    last_count = current
+                    logger.info("Scraped %d %s so far (scroll target: %s)",
+                                current, list_type, scrolled_to)
 
-                be.scroll_element(
-                    page,
-                    "document.querySelector('[role=\"dialog\"] [style*=\"overflow\"]') || "
-                    "document.querySelector('[role=\"dialog\"] ul')",
-                )
-                be.human_delay(0.7, 1.4)
+            logger.info("Scrape complete: %d %s", len(results), list_type)
 
             try:
                 page.keyboard.press("Escape")
