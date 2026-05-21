@@ -587,32 +587,26 @@ def _scrape_list_impl(list_type: str, progress_cb=None) -> dict:
             if "accounts/login" in page.url:
                 raise Exception("Session expired — please log in again")
 
-            # Wait for the modal dialog
-            try:
-                page.wait_for_selector('[role="dialog"]', timeout=8000)
-                logger.info("Dialog found for %s/%s", username, list_type)
-            except Exception:
-                logger.warning("No dialog found for %s/%s — will try scrolling anyway", username, list_type)
+            # Don't wait specifically for a dialog — on the mobile viewport the
+            # list often renders as a full page, and any [role="dialog"] present
+            # may just be a stray prompt. We scroll EVERYTHING each pass.
+            be.human_delay(1.0, 1.5)
 
-            # The following modal has its own scroll container inside the dialog;
-            # scrolling the window does nothing. We detect the right container by
-            # actually TRYING to scroll each element and checking if scrollTop
-            # changed — this works regardless of computed overflow style.
+            # Scroll the window AND every scrollable container on the page each
+            # iteration. This triggers pagination regardless of whether the list
+            # lives in the window (mobile full page) or an inner dialog container.
             _SCROLL_JS = """() => {
-                const dialog = document.querySelector('[role="dialog"]');
-                if (dialog) {
-                    // Try every div/ul from deepest to shallowest
-                    const els = [dialog, ...dialog.querySelectorAll('div, ul')];
-                    for (let i = els.length - 1; i >= 0; i--) {
-                        const el = els[i];
+                let containers = 0;
+                window.scrollBy(0, 1500);
+                if (document.scrollingElement) document.scrollingElement.scrollTop += 1500;
+                for (const el of document.querySelectorAll('div, ul, section')) {
+                    if (el.scrollHeight > el.clientHeight + 100) {
                         const before = el.scrollTop;
-                        el.scrollTop += 1200;
-                        if (el.scrollTop > before) return 'dialog-inner';
+                        el.scrollTop += 1500;
+                        if (el.scrollTop > before) containers++;
                     }
-                    return 'dialog-no-scroll';
                 }
-                window.scrollBy(0, 1200);
-                return 'window';
+                return 'win+' + containers + 'cont';
             }"""
 
             last_count = -1
