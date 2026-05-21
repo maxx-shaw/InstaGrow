@@ -8,9 +8,10 @@ _lock = threading.Lock()
 
 _state = {
     "status": "idle",            # idle | running
-    "job_type": None,            # unfollow | follow | scan | check_follow_back
+    "job_type": None,            # unfollow | follow | scan | check_follow_back | sync
     "current": 0,
     "total": 0,
+    "detail": None,              # free-form progress message (e.g. scraping status)
     "last_action": None,         # follow | unfollow | error | scan
     "last_username": None,
     "last_action_success": True,
@@ -35,6 +36,7 @@ def job_start(job_type: str, total: int):
         _state["job_type"] = job_type
         _state["current"] = 0
         _state["total"] = total
+        _state["detail"] = None
         _state["next_run_seconds"] = None
 
 

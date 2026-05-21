@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+import events
 import instagram_client as ig
 from database import (
     get_db, Account, FollowRecord, Blacklist, Whitelist, ActivityLog, FollowQueue
@@ -96,10 +97,21 @@ def sync_following(db: Session = Depends(get_db)):
     account = _active_account(db)
     my_id = ig.get_my_user_id()
 
+    events.job_start("sync", 0)
+
+    def _progress(list_type, count):
+        noun = "following" if list_type == "following" else "followers"
+        events.update(status="running", job_type="sync",
+                      current=count, detail=f"Fetched {count} {noun}…")
+
     try:
-        following_map = ig.get_following(my_id, amount=0)
-        follower_map = ig.get_followers(my_id, amount=0)
+        events.update(status="running", job_type="sync", detail="Fetching the people you follow…")
+        following_map = ig.get_following(my_id, amount=0, progress_cb=_progress)
+        events.update(status="running", job_type="sync", detail="Fetching your followers…")
+        follower_map = ig.get_followers(my_id, amount=0, progress_cb=_progress)
+        events.update(status="running", job_type="sync", detail="Comparing lists and saving…")
     except Exception as e:
+        events.job_complete("sync")
         err = str(e)
         if "wait" in err.lower() or "few minutes" in err.lower() or "429" in err or "throttl" in err.lower():
             from fastapi.responses import JSONResponse
@@ -169,6 +181,8 @@ def sync_following(db: Session = Depends(get_db)):
     )
     db.add(log)
     db.commit()
+
+    events.job_complete("sync")
 
     return {"added": added, "updated": updated, "total_following": len(following_map)}
 

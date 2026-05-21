@@ -496,10 +496,10 @@
           <div class="live-now-block">
             <div class="job-spinner"></div>
             <div style="min-width:0;flex:1;">
-              <div class="text-xs text-slate-400 mb-0.5">Now processing</div>
-              <div class="text-base font-bold text-white truncate">@<span id="live-current-username">…</span></div>
+              <div id="live-now-label" class="text-xs text-slate-400 mb-0.5">Now processing</div>
+              <div class="text-base font-bold text-white truncate"><span id="live-uname-prefix">@</span><span id="live-current-username">…</span></div>
             </div>
-            <div style="text-align:right;flex-shrink:0;">
+            <div id="live-timer-col" style="text-align:right;flex-shrink:0;">
               <div class="text-xs text-slate-500 mb-0.5">Next action in</div>
               <div class="live-timer" id="live-next-timer">—</div>
             </div>
@@ -1262,6 +1262,7 @@ async function syncFollowing() {
   const btn = document.getElementById('sync-btn');
   btn.disabled = true;
   btn.innerHTML = '<span class="loading-spinner"></span><span>Syncing...</span>';
+  startLiveStream(); // ensure the live card is receiving scraping progress
   try {
     const result = await api('POST', '/api/follows/sync');
     toast(`Sync complete: ${result.total_following} following`, 'success');
@@ -1762,7 +1763,7 @@ function updateLiveCard(s) {
   // Job label
   const label = document.getElementById('live-job-label');
   if (running && s.job_type) {
-    const names = { unfollow: 'Auto-Unfollow', follow: 'Auto-Follow', scan: 'Scanning', check_follow_back: 'Checking' };
+    const names = { unfollow: 'Auto-Unfollow', follow: 'Auto-Follow', scan: 'Scanning', check_follow_back: 'Checking', sync: 'Syncing' };
     label.textContent = names[s.job_type] || s.job_type;
     label.className = 'badge-purple';
   } else {
@@ -1777,9 +1778,22 @@ function updateLiveCard(s) {
   idleMsg.style.display = running ? 'none' : 'block';
 
   if (running) {
-    // Current username
-    if (s.last_username) {
-      document.getElementById('live-current-username').textContent = s.last_username;
+    const unamePrefix = document.getElementById('live-uname-prefix');
+    const nowLabel = document.getElementById('live-now-label');
+    const timerCol = document.getElementById('live-timer-col');
+    if (s.job_type === 'sync') {
+      // Sync doesn't process one user at a time — show the live detail message
+      if (nowLabel) nowLabel.textContent = 'Syncing';
+      if (unamePrefix) unamePrefix.style.display = 'none';
+      if (timerCol) timerCol.style.visibility = 'hidden';
+      document.getElementById('live-current-username').textContent = s.detail || 'Working…';
+    } else {
+      if (nowLabel) nowLabel.textContent = 'Now processing';
+      if (unamePrefix) unamePrefix.style.display = '';
+      if (timerCol) timerCol.style.visibility = '';
+      if (s.last_username) {
+        document.getElementById('live-current-username').textContent = s.last_username;
+      }
     }
 
     // Delay countdown — only restart when next_run_seconds is a fresh value

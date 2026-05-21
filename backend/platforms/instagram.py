@@ -517,12 +517,16 @@ class _UserInfo:
         self.profile_pic_url = profile_pic_url
 
 
-def _scrape_list(list_type: str) -> dict:
-    return be.run_blocking(_scrape_list_impl, list_type)
+def _scrape_list(list_type: str, progress_cb=None) -> dict:
+    return be.run_blocking(_scrape_list_impl, list_type, progress_cb)
 
 
-def _scrape_list_impl(list_type: str) -> dict:
-    """Scrape following or followers by intercepting XHR calls."""
+def _scrape_list_impl(list_type: str, progress_cb=None) -> dict:
+    """Scrape following or followers by intercepting XHR calls.
+
+    progress_cb(list_type, count) is invoked as new users are scraped so
+    callers can surface live progress to the UI.
+    """
     username = login_state.get("username", "")
     if not username:
         raise Exception("Not logged in")
@@ -585,23 +589,27 @@ def _scrape_list_impl(list_type: str) -> dict:
             except Exception:
                 logger.warning("No dialog found for %s/%s — will try scrolling anyway", username, list_type)
 
-            # JS that finds the actual scrollable element inside the dialog
+            # The follower/following modal renders the list inside a dialog
+            # with its OWN scroll container (scrolling the window does nothing).
+            # Rather than guess the selector, scan every descendant of the
+            # dialog and scroll the one that actually overflows. Fall back to
+            # window scroll when the list rendered as a full page (no dialog).
             _SCROLL_JS = """() => {
-                const candidates = [
-                    '[role="dialog"] [style*="overflow"]',
-                    '[role="dialog"] > div > div > div',
-                    '[role="dialog"] ul',
-                    '[role="dialog"]',
-                ];
-                for (const sel of candidates) {
-                    const el = document.querySelector(sel);
-                    if (el && el.scrollHeight > el.clientHeight + 10) {
-                        el.scrollBy(0, 900);
-                        return sel;
+                const dialog = document.querySelector('[role="dialog"]');
+                if (dialog) {
+                    let best = null, bestOverflow = 0;
+                    for (const el of dialog.querySelectorAll('*')) {
+                        const overflow = el.scrollHeight - el.clientHeight;
+                        const oy = getComputedStyle(el).overflowY;
+                        if ((oy === 'auto' || oy === 'scroll') && overflow > bestOverflow) {
+                            best = el; bestOverflow = overflow;
+                        }
                     }
+                    if (best) { best.scrollBy(0, 1200); return 'dialog-inner'; }
+                    dialog.scrollBy(0, 1200);
                 }
-                window.scrollBy(0, 900);
-                return 'window';
+                window.scrollBy(0, 1200);
+                return dialog ? 'dialog' : 'window';
             }"""
 
             last_count = -1
@@ -622,6 +630,11 @@ def _scrape_list_impl(list_type: str) -> dict:
                     last_count = current
                     logger.info("Scraped %d %s so far (scroll target: %s)",
                                 current, list_type, scrolled_to)
+                    if progress_cb:
+                        try:
+                            progress_cb(list_type, current)
+                        except Exception:
+                            pass
 
             logger.info("Scrape complete: %d %s", len(results), list_type)
 
@@ -637,12 +650,12 @@ def _scrape_list_impl(list_type: str) -> dict:
     return results
 
 
-def get_following(user_id: str, amount: int = 0) -> dict:
-    return _scrape_list("following")
+def get_following(user_id: str, amount: int = 0, progress_cb=None) -> dict:
+    return _scrape_list("following", progress_cb=progress_cb)
 
 
-def get_followers(user_id: str, amount: int = 0) -> dict:
-    return _scrape_list("followers")
+def get_followers(user_id: str, amount: int = 0, progress_cb=None) -> dict:
+    return _scrape_list("followers", progress_cb=progress_cb)
 
 
 def get_user_info_by_username(username: str) -> _UserInfo:
