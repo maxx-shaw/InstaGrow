@@ -558,6 +558,7 @@ def _scrape_list_impl(list_type: str, progress_cb=None) -> dict:
                              .get("edges", []))
                 users = [e.get("node", {}) for e in edges]
 
+            before = len(results)
             for user in users:
                 pk = str(user.get("pk", "") or user.get("id", ""))
                 uname = user.get("username", "")
@@ -569,10 +570,14 @@ def _scrape_list_impl(list_type: str, progress_cb=None) -> dict:
                         profile_pic_url=user.get("profile_pic_url"),
                     )
 
+            next_id = data.get("next_max_id")
+            logger.info("%s XHR from %s: +%d users (total %d), next_max_id=%r",
+                        list_type, url.split("?")[0], len(results) - before, len(results), next_id)
+
             # No next_max_id means we've hit the end of the list
             if "next_max_id" in data and not data["next_max_id"]:
                 end_of_list.set()
-                logger.info("End of %s list signalled by API (got %d total)", list_type, len(results))
+                logger.info("End of %s list (next_max_id empty)", list_type)
 
         page.on("response", on_response)
         try:
@@ -589,27 +594,25 @@ def _scrape_list_impl(list_type: str, progress_cb=None) -> dict:
             except Exception:
                 logger.warning("No dialog found for %s/%s — will try scrolling anyway", username, list_type)
 
-            # The follower/following modal renders the list inside a dialog
-            # with its OWN scroll container (scrolling the window does nothing).
-            # Rather than guess the selector, scan every descendant of the
-            # dialog and scroll the one that actually overflows. Fall back to
-            # window scroll when the list rendered as a full page (no dialog).
+            # The following modal has its own scroll container inside the dialog;
+            # scrolling the window does nothing. We detect the right container by
+            # actually TRYING to scroll each element and checking if scrollTop
+            # changed — this works regardless of computed overflow style.
             _SCROLL_JS = """() => {
                 const dialog = document.querySelector('[role="dialog"]');
                 if (dialog) {
-                    let best = null, bestOverflow = 0;
-                    for (const el of dialog.querySelectorAll('*')) {
-                        const overflow = el.scrollHeight - el.clientHeight;
-                        const oy = getComputedStyle(el).overflowY;
-                        if ((oy === 'auto' || oy === 'scroll') && overflow > bestOverflow) {
-                            best = el; bestOverflow = overflow;
-                        }
+                    // Try every div/ul from deepest to shallowest
+                    const els = [dialog, ...dialog.querySelectorAll('div, ul')];
+                    for (let i = els.length - 1; i >= 0; i--) {
+                        const el = els[i];
+                        const before = el.scrollTop;
+                        el.scrollTop += 1200;
+                        if (el.scrollTop > before) return 'dialog-inner';
                     }
-                    if (best) { best.scrollBy(0, 1200); return 'dialog-inner'; }
-                    dialog.scrollBy(0, 1200);
+                    return 'dialog-no-scroll';
                 }
                 window.scrollBy(0, 1200);
-                return dialog ? 'dialog' : 'window';
+                return 'window';
             }"""
 
             last_count = -1

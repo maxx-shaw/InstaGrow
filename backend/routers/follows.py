@@ -121,6 +121,9 @@ def sync_following(db: Session = Depends(get_db)):
             )
         raise HTTPException(502, f"Instagram error: {err}")
     follower_ids = set(str(uid) for uid in follower_map.keys())
+    follows_back_count = sum(1 for uid in following_map if str(uid) in follower_ids)
+    logger.info("Sync: %d following, %d followers, %d follow-back",
+                len(following_map), len(follower_map), follows_back_count)
 
     now = datetime.datetime.utcnow()
     added = updated = 0

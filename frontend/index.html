@@ -1267,6 +1267,7 @@ async function syncFollowing() {
     const result = await api('POST', '/api/follows/sync');
     toast(`Sync complete: ${result.total_following} following`, 'success');
     loadDashboard();
+    loadFollowing(1); // refresh following tab data
   } catch(e) {
     if (e.status === 429) {
       showRateLimit(e.retry_after || 300);
