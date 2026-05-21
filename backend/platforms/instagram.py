@@ -13,6 +13,11 @@ import browser_engine as be
 logger = logging.getLogger("socialreach.instagram")
 IG = "https://www.instagram.com"
 
+
+class ThrottledError(Exception):
+    """Raised when Instagram rate-limits a scrape, leaving the list incomplete."""
+
+
 # ---------------------------------------------------------------------------
 # Shared state
 # ---------------------------------------------------------------------------
@@ -533,6 +538,8 @@ def _scrape_list_impl(list_type: str, progress_cb=None) -> dict:
 
     results: dict = {}
     end_of_list = threading.Event()
+    truncated = threading.Event()  # set when Instagram cuts us off mid-list (throttle)
+    state = {"last_cursor": None}  # most recent non-empty next_max_id
 
     with _page_lock:
         page = be.get_page(_profile_key)
@@ -571,13 +578,24 @@ def _scrape_list_impl(list_type: str, progress_cb=None) -> dict:
                     )
 
             next_id = data.get("next_max_id")
+            if next_id:
+                state["last_cursor"] = next_id
             logger.info("%s XHR from %s: +%d users (total %d), next_max_id=%r",
                         list_type, url.split("?")[0], len(results) - before, len(results), next_id)
 
-            # No next_max_id means we've hit the end of the list
+            # No next_max_id means the list ended.
             if "next_max_id" in data and not data["next_max_id"]:
+                state["last_cursor"] = None
+                # A genuine final page always carries at least one user. An empty
+                # terminating page means Instagram throttled and cut us off — the
+                # list is INCOMPLETE and must not be trusted.
+                if len(users) == 0:
+                    truncated.set()
+                    logger.warning("%s list TRUNCATED by Instagram at %d (empty final page = throttled)",
+                                   list_type, len(results))
+                else:
+                    logger.info("End of %s list (clean, %d total)", list_type, len(results))
                 end_of_list.set()
-                logger.info("End of %s list (next_max_id empty)", list_type)
 
         page.on("response", on_response)
         try:
@@ -611,11 +629,14 @@ def _scrape_list_impl(list_type: str, progress_cb=None) -> dict:
 
             last_count = -1
             stalls = 0
-            max_stalls = 10  # 10 × ~1.2s = ~12s of no new data before giving up
+            max_stalls = 8
 
+            # Scroll slowly. Instagram throttles the friendships API if we page
+            # through it too fast, returning an empty page that truncates the
+            # list. A calmer cadence keeps the whole list flowing.
             while stalls < max_stalls and not end_of_list.is_set():
                 scrolled_to = page.evaluate(_SCROLL_JS)
-                be.human_delay(1.0, 1.5)
+                be.human_delay(2.0, 3.5)
 
                 current = len(results)
                 if current == last_count:
@@ -633,8 +654,6 @@ def _scrape_list_impl(list_type: str, progress_cb=None) -> dict:
                         except Exception:
                             pass
 
-            logger.info("Scrape complete: %d %s", len(results), list_type)
-
             try:
                 page.keyboard.press("Escape")
                 be.human_delay(0.4, 0.8)
@@ -644,6 +663,17 @@ def _scrape_list_impl(list_type: str, progress_cb=None) -> dict:
         finally:
             page.remove_listener("response", on_response)
 
+    # Incomplete if Instagram threw an empty page (truncated) OR if we stopped
+    # while a pagination cursor was still pending (stalled before the end).
+    if truncated.is_set() or (not end_of_list.is_set() and state["last_cursor"]):
+        logger.warning("Scrape of %s incomplete — %d collected (last_cursor=%r)",
+                       list_type, len(results), state["last_cursor"])
+        raise ThrottledError(
+            f"Couldn't load your full {list_type} list (stopped at {len(results)}). "
+            "Instagram may be rate-limiting — wait a few minutes and sync again."
+        )
+
+    logger.info("Scrape complete: %d %s", len(results), list_type)
     return results
 
 

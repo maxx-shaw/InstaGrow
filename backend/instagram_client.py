@@ -3,6 +3,7 @@ v2 adapter — delegates to the Playwright-based Instagram platform.
 All existing routers import from this module unchanged.
 """
 from platforms.instagram import (
+    ThrottledError,
     login_state,
     is_logged_in,
     get_my_user_id,

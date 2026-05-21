@@ -1,5 +1,6 @@
 import datetime
 import logging
+import time
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -107,9 +108,24 @@ def sync_following(db: Session = Depends(get_db)):
     try:
         events.update(status="running", job_type="sync", detail="Fetching the people you follow…")
         following_map = ig.get_following(my_id, amount=0, progress_cb=_progress)
+
+        # Cool-off between the two list scrapes — hammering the friendships API
+        # back-to-back makes Instagram throttle and truncate the second list.
+        for remaining in range(20, 0, -1):
+            events.update(status="running", job_type="sync",
+                          detail=f"Pausing {remaining}s to avoid Instagram rate limits…")
+            time.sleep(1)
+
         events.update(status="running", job_type="sync", detail="Fetching your followers…")
         follower_map = ig.get_followers(my_id, amount=0, progress_cb=_progress)
         events.update(status="running", job_type="sync", detail="Comparing lists and saving…")
+    except ig.ThrottledError as e:
+        events.job_complete("sync")
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=429,
+            content={"detail": str(e), "retry_after": 300},
+        )
     except Exception as e:
         events.job_complete("sync")
         err = str(e)
