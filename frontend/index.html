@@ -1073,7 +1073,7 @@ async function doLogin() {
   pollLoginStatus();
 }
 
-function pollLoginStatus() {
+function pollLoginStatus(ignoreTotp = false) {
   const interval = setInterval(async () => {
     const status = await api('GET', '/api/auth/status');
 
@@ -1085,9 +1085,12 @@ function pollLoginStatus() {
       pendingChallengeType = 'challenge';
       showChallengeForm(status.challenge_method);
     } else if (status.status === 'totp_required') {
-      clearInterval(interval);
-      pendingChallengeType = 'totp';
-      showChallengeForm('totp');
+      if (!ignoreTotp) {
+        clearInterval(interval);
+        pendingChallengeType = 'totp';
+        showChallengeForm('totp');
+      }
+      // if ignoreTotp, keep polling — code was just submitted and backend is still processing
     } else if (status.status === 'error') {
       clearInterval(interval);
       resetLoginBtn();
@@ -1121,7 +1124,8 @@ async function submitChallenge() {
   const endpoint = pendingChallengeType === 'totp' ? '/api/auth/totp' : '/api/auth/challenge';
   await api('POST', endpoint, { code });
   showStatusMsg('Verifying...', 'info');
-  pollLoginStatus();
+  // Pass ignoreTotp=true so the poller keeps running while the backend processes the code
+  pollLoginStatus(true);
 }
 
 function resetLoginBtn() {
