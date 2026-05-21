@@ -20,10 +20,17 @@ IG = "https://www.instagram.com"
 login_state: dict = {
     "status": "idle",   # idle | logging_in | challenge_required | totp_required | logged_in | error
     "error": None,
+    "detail": None,     # human-readable progress message for the UI
     "challenge_method": None,
     "username": None,
     "user_id": None,
 }
+
+
+def _set_detail(msg: str):
+    """Update the user-facing progress message and log it."""
+    login_state["detail"] = msg
+    logger.info("Login progress: %s", msg)
 
 _profile_key: Optional[str] = None
 _page_lock = threading.Lock()
@@ -158,33 +165,37 @@ def login_async(username: str, password: str, session_json: Optional[str] = None
 def _do_login(username: str, password: str):
     global _profile_key
     _profile_key = f"instagram_{username}"
-    login_state.update(status="logging_in", error=None, username=username)
+    login_state.update(status="logging_in", error=None,
+                       detail="Starting up the browser…", username=username)
     logger.info("Starting Playwright login for @%s", username)
 
     with _page_lock:
         try:
-            logger.info("Launching browser for @%s", username)
+            _set_detail("Launching secure browser session…")
             page = be.get_page(_profile_key)
             page.set_default_timeout(30000)
-            logger.info("Navigating to Instagram login")
+            _set_detail("Opening Instagram…")
             page.goto(f"{IG}/accounts/login/", wait_until="domcontentloaded")
             be.human_delay(1.5, 2.5)
 
             # Already logged in from saved context?
             if "accounts/login" not in page.url:
+                _set_detail("Existing session found — signing you in…")
                 _finish_login(page, username)
                 return
 
             # Dismiss cookie / consent overlay before touching any inputs
+            _set_detail("Accepting cookie prompt…")
             _dismiss_overlays(page)
 
-            logger.info("Typing credentials")
+            _set_detail("Entering your credentials…")
             be.human_type(page, 'input[name="username"]', username)
             be.human_delay(0.4, 0.9)
             be.human_type(page, 'input[name="password"]', password)
             be.human_delay(0.6, 1.2)
-            logger.info("Submitting login form")
+            _set_detail("Submitting login…")
             _submit_login_form(page)
+            _set_detail("Waiting for Instagram to respond…")
 
             try:
                 page.wait_for_url(lambda u: "accounts/login" not in u, timeout=15000)
@@ -229,13 +240,15 @@ def _do_login(username: str, password: str):
             if two_factor_hit:
                 logger.info("Instagram requires 2FA — waiting for code (input_found=%s, url_match=%s, text_match=%s)",
                             two_factor_input_found, "two_factor" in url, two_factor_text_hit)
-                login_state.update(status="totp_required", error=None)
+                login_state.update(status="totp_required", error=None,
+                                   detail="Two-factor authentication required.")
                 _totp_event.clear()
                 got = _totp_event.wait(timeout=300)
                 if not got or not _totp_code:
                     login_state.update(status="error", error="2FA code timed out or cancelled — please try again")
                     return
                 logger.info("Got 2FA code, submitting")
+                _set_detail("Submitting your verification code…")
                 _submit_totp(page, username)
 
             elif "challenge" in url or "checkpoint" in url:
@@ -316,6 +329,7 @@ def _submit_totp(page, username: str):
             logger.info("No confirm button matched — pressing Enter")
             page.keyboard.press("Enter")
 
+        _set_detail("Verifying code — approve the login in your Instagram app if it asks…")
         try:
             page.wait_for_url(lambda u: "two_factor" not in u, timeout=15000)
         except Exception:
@@ -357,12 +371,14 @@ def login_by_sessionid_async(username: str, session_id: str):
 def _do_login_sessionid(username: str, session_id: str):
     global _profile_key
     _profile_key = f"instagram_{username}"
-    login_state.update(status="logging_in", error=None, username=username)
+    login_state.update(status="logging_in", error=None,
+                       detail="Restoring your session…", username=username)
 
     with _page_lock:
         try:
             be.inject_cookie(_profile_key, "sessionid", session_id, ".instagram.com")
             page = be.get_page(_profile_key)
+            _set_detail("Opening Instagram…")
             page.goto(f"{IG}/", wait_until="domcontentloaded")
             be.human_delay(2, 3)
 
@@ -385,6 +401,7 @@ def _do_login_sessionid(username: str, session_id: str):
 # ---------------------------------------------------------------------------
 
 def _finish_login(page, username: str):
+    _set_detail("Finishing up — almost there…")
     # Dismiss prompts
     for text in ("Not now", "Not Now"):
         try:
@@ -394,7 +411,8 @@ def _finish_login(page, username: str):
             pass
 
     user_id = _extract_user_id(page, username)
-    login_state.update(status="logged_in", user_id=user_id or username, username=username)
+    login_state.update(status="logged_in", detail=None,
+                       user_id=user_id or username, username=username)
     be.save_context(_profile_key)
     logger.info("Logged in as %s (user_id=%s)", username, user_id)
 

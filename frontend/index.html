@@ -1089,14 +1089,17 @@ function pollLoginStatus(ignoreTotp = false) {
         clearInterval(interval);
         pendingChallengeType = 'totp';
         showChallengeForm('totp');
+      } else {
+        // code was just submitted — keep polling and surface backend progress
+        showStatusMsg(status.detail || 'Verifying your code…', 'info');
       }
-      // if ignoreTotp, keep polling — code was just submitted and backend is still processing
     } else if (status.status === 'error') {
       clearInterval(interval);
       resetLoginBtn();
       showStatusMsg(status.error || 'Login failed', 'error');
     } else {
-      showStatusMsg('Connecting...', 'info');
+      // logging_in / connecting — show the live progress message from the backend
+      showStatusMsg(status.detail || 'Connecting…', 'info');
     }
   }, 1500);
 }
